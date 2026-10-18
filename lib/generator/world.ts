@@ -10,6 +10,7 @@ import type {
   NpcRole,
   Rng,
 } from "@/types/generator";
+import { imageForLocation, portraitForNpc } from "./images";
 
 interface LocationArchetype {
   type: string;
@@ -174,6 +175,7 @@ export function generateWorld(
     name: pickOne(a.names, rng),
     type: a.type,
     description: pickOne(a.descriptions, rng),
+    image_url: imageForLocation(a.type),
   }));
 
   // 2. character_locations: каждый персонаж связан с 1-2 локациями
@@ -216,13 +218,15 @@ export function generateWorld(
     for (const role of NPC_ROLES) {
       const name = pickUniqueName(NPC_NAMES, usedNames, rng);
       usedNames.add(name);
-      npcs.push({
+      const npc: Npc = {
         name,
         role,
         description: pickOne(NPC_DESCRIPTIONS, rng),
         location_index: Math.floor(rng() * locations.length),
         faction_index: Math.floor(rng() * shuffledFactions.length),
-      });
+      };
+      npc.image_url = portraitForNpc(npc);
+      npcs.push(npc);
     }
   }
 

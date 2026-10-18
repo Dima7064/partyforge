@@ -65,7 +65,7 @@ export interface Personality {
 }
 
 export interface Character {
-  id?: string; // появляется после сохранения в БД
+  id?: string;
   name: string;
   class_name: string;
   race_name: string;
@@ -76,6 +76,7 @@ export interface Character {
   personality: Personality;
   backstory: string;
   secret_text: string;
+  image_url?: string;
 }
 
 // ============================================
@@ -95,8 +96,9 @@ export interface Relationship {
 
 export interface Location {
   name: string;
-  type: string; // "city" | "temple" | "forest" | "ruins"
+  type: string;
   description: string;
+  image_url?: string;
 }
 
 export interface CharacterLocation {
@@ -118,6 +120,7 @@ export interface Npc {
   description: string;
   location_index?: number;
   faction_index?: number;
+  image_url?: string;
 }
 
 // ============================================

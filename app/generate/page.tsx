@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,8 +31,18 @@ export default function GeneratePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (level < 1 || level > 20) {
+      setError("Уровень должен быть от 1 до 20");
+      return;
+    }
+    if (partySize < 2 || partySize > 6) {
+      setError("Размер партии должен быть от 2 до 6");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/generate", {
@@ -49,11 +60,13 @@ export default function GeneratePage() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Ошибка");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? `Ошибка ${res.status}`);
       }
 
       const { share_code } = await res.json();
+      if (!share_code) throw new Error("Сервер вернул пустой код");
+
       router.push(`/c/${share_code}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка генерации");
@@ -63,12 +76,19 @@ export default function GeneratePage() {
 
   return (
     <main className="min-h-screen p-8 max-w-2xl mx-auto">
-      <h1 className="text-4xl font-bold text-forge-gold-light mb-2">
-        Создать кампанию
-      </h1>
-      <p className="text-forge-muted mb-8">
-        Заполни параметры — и мы сгенерируем партию, мир и сюжетные крючки.
-      </p>
+      <div className="mb-8">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="mb-4">
+            ← На главную
+          </Button>
+        </Link>
+        <h1 className="text-4xl font-bold text-forge-gold-light mb-2">
+          Создать кампанию
+        </h1>
+        <p className="text-forge-muted">
+          Заполни параметры — и мы сгенерируем партию, мир и сюжетные крючки.
+        </p>
+      </div>
 
       <Card>
         <CardHeader>
@@ -77,7 +97,7 @@ export default function GeneratePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="level">Уровень</Label>
+              <Label htmlFor="level">Уровень (1–20)</Label>
               <Input
                 id="level"
                 type="number"
@@ -85,6 +105,7 @@ export default function GeneratePage() {
                 max={20}
                 value={level}
                 onChange={(e) => setLevel(Number(e.target.value))}
+                disabled={loading}
               />
             </div>
 
@@ -94,6 +115,7 @@ export default function GeneratePage() {
                 id="tone"
                 value={tone}
                 onChange={(e) => setTone(e.target.value as Tone)}
+                disabled={loading}
               >
                 {TONES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -112,6 +134,7 @@ export default function GeneratePage() {
                 max={6}
                 value={partySize}
                 onChange={(e) => setPartySize(Number(e.target.value))}
+                disabled={loading}
               />
             </div>
 
@@ -121,6 +144,7 @@ export default function GeneratePage() {
                 id="duration"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
+                disabled={loading}
               >
                 <option value="one_shot">Ваншот</option>
                 <option value="mini_campaign">Мини-кампания</option>
@@ -129,10 +153,17 @@ export default function GeneratePage() {
             </div>
 
             {error && (
-              <p className="text-forge-ember text-sm">{error}</p>
+              <div className="bg-forge-ember/10 border border-forge-ember/30 rounded p-3">
+                <p className="text-forge-ember text-sm">{error}</p>
+              </div>
             )}
 
-            <Button type="submit" size="lg" disabled={loading} className="w-full">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              className="w-full"
+            >
               {loading ? "Генерируем..." : "Сгенерировать"}
             </Button>
           </form>

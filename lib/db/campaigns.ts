@@ -59,10 +59,12 @@ export async function saveCampaign(
     throw new Error("Не удалось создать share_code — попробуй ещё раз");
   }
 
-  // characters
   const characterRows = campaign.characters.map((c) => ({
     campaign_id: campaignId,
     name: c.name,
+    class_id: null,
+    race_id: null,
+    background_id: null,
     class_name: c.class_name,
     race_name: c.race_name,
     background_name: c.background_name,
@@ -72,6 +74,7 @@ export async function saveCampaign(
     personality: c.personality,
     backstory: c.backstory,
     secret_text: c.secret_text,
+    image_url: c.image_url ?? null,
   }));
 
   const { data: insertedChars, error: charsErr } = await supabase
@@ -82,7 +85,6 @@ export async function saveCampaign(
   if (charsErr) throw charsErr;
   const charIds = (insertedChars ?? []).map((r) => r.id);
 
-  // relationships
   if (campaign.relationships.length > 0) {
     const relRows = campaign.relationships.map((r) => ({
       campaign_id: campaignId,
@@ -95,12 +97,12 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // locations
   const locationRows = campaign.locations.map((l) => ({
     campaign_id: campaignId,
     name: l.name,
     type: l.type,
     description: l.description,
+    image_url: l.image_url ?? null,
   }));
   const { data: insertedLocs, error: locErr } = await supabase
     .from("locations")
@@ -109,7 +111,6 @@ export async function saveCampaign(
   if (locErr) throw locErr;
   const locIds = (insertedLocs ?? []).map((r) => r.id);
 
-  // character_locations
   if (campaign.character_locations.length > 0) {
     const clRows = campaign.character_locations.map((cl) => ({
       character_id: charIds[cl.character_index],
@@ -122,7 +123,6 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // factions
   const factionRows = campaign.factions.map((f) => ({
     campaign_id: campaignId,
     name: f.name,
@@ -137,7 +137,6 @@ export async function saveCampaign(
   if (factErr) throw factErr;
   const factIds = (insertedFacts ?? []).map((r) => r.id);
 
-  // npcs
   if (campaign.npcs.length > 0) {
     const npcRows = campaign.npcs.map((n) => ({
       campaign_id: campaignId,
@@ -148,12 +147,12 @@ export async function saveCampaign(
         n.location_index !== undefined ? locIds[n.location_index] : null,
       faction_id:
         n.faction_index !== undefined ? factIds[n.faction_index] : null,
+      image_url: n.image_url ?? null,
     }));
     const { error } = await supabase.from("npcs").insert(npcRows);
     if (error) throw error;
   }
 
-  // hooks
   if (campaign.hooks.length > 0) {
     const hookRows = campaign.hooks.map((h) => ({
       campaign_id: campaignId,
@@ -262,6 +261,7 @@ export async function getCampaignByCode(
     personality: c.personality,
     backstory: c.backstory,
     secret_text: c.secret_text ?? "",
+    image_url: c.image_url ?? undefined,
   }));
 
   const relationships: Relationship[] = (relsRes.data ?? []).map((r) => ({
@@ -275,13 +275,18 @@ export async function getCampaignByCode(
     name: l.name,
     type: l.type,
     description: l.description,
+    image_url: l.image_url ?? undefined,
   }));
 
   const relevantCharIds = new Set(chars.map((c) => c.id));
   const relevantLocIds = new Set(locs.map((l) => l.id));
 
   const character_locations: CharacterLocation[] = (clRes.data ?? [])
-    .filter((cl) => relevantCharIds.has(cl.character_id) && relevantLocIds.has(cl.location_id))
+    .filter(
+      (cl) =>
+        relevantCharIds.has(cl.character_id) &&
+        relevantLocIds.has(cl.location_id),
+    )
     .map((cl) => ({
       character_index: charIdToIndex.get(cl.character_id) ?? 0,
       location_index: locIdToIndex.get(cl.location_id) ?? 0,
@@ -307,6 +312,7 @@ export async function getCampaignByCode(
       n.faction_id && factIdToIndex.has(n.faction_id)
         ? factIdToIndex.get(n.faction_id)
         : undefined,
+    image_url: n.image_url ?? undefined,
   }));
 
   const hooks: Hook[] = (hooksRes.data ?? []).map((h) => ({
@@ -413,6 +419,7 @@ export async function regenerateCharacter(
       personality: newChar.personality,
       backstory: newChar.backstory,
       secret_text: newChar.secret_text,
+      image_url: newChar.image_url ?? null,
     })
     .eq("id", existing.id);
 

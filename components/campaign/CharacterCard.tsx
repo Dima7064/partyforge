@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -27,28 +28,53 @@ const ABILITY_LABEL: Record<string, string> = {
 
 export function CharacterCard({ character }: { character: Character }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
-          <span>{character.name}</span>
-          <Badge variant="muted">
-            {ROLE_LABEL[character.role] ?? character.role}
-          </Badge>
-        </CardTitle>
-        <p className="text-sm text-forge-muted">
-          {character.race_name} · {character.class_name} · {character.background_name} · Ур.{" "}
-          {character.level}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="overflow-hidden">
+      <div className="flex gap-4">
+        <div className="relative w-32 h-32 shrink-0 bg-forge-bg">
+          {character.image_url ? (
+            <Image
+              src={character.image_url}
+              alt={character.name}
+              fill
+              sizes="128px"
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-forge-gold/40">
+              {character.name.charAt(0)}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 py-4 pr-4">
+          <CardHeader className="p-0 pb-2">
+            <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
+              <span>{character.name}</span>
+              <Badge variant="muted">
+                {ROLE_LABEL[character.role] ?? character.role}
+              </Badge>
+            </CardTitle>
+            <p className="text-sm text-forge-muted">
+              {character.race_name} · {character.class_name} ·{" "}
+              {character.background_name} · Ур. {character.level}
+            </p>
+          </CardHeader>
+        </div>
+      </div>
+
+      <CardContent className="space-y-4 pt-4">
         <div className="grid grid-cols-6 gap-1">
           {Object.entries(character.abilities).map(([key, value]) => (
             <div
               key={key}
               className="bg-forge-bg border border-forge-border rounded p-1.5 text-center"
             >
-              <div className="text-[10px] text-forge-muted">{ABILITY_LABEL[key] ?? key}</div>
-              <div className="text-lg font-bold text-forge-gold-light">{value}</div>
+              <div className="text-[10px] text-forge-muted">
+                {ABILITY_LABEL[key] ?? key}
+              </div>
+              <div className="text-lg font-bold text-forge-gold-light">
+                {value}
+              </div>
             </div>
           ))}
         </div>
@@ -59,7 +85,9 @@ export function CharacterCard({ character }: { character: Character }) {
           </div>
           <div className="flex flex-wrap gap-1">
             {character.personality.values.map((v) => (
-              <Badge key={v} variant="gold">{v}</Badge>
+              <Badge key={v} variant="gold">
+                {v}
+              </Badge>
             ))}
           </div>
         </div>
@@ -70,7 +98,9 @@ export function CharacterCard({ character }: { character: Character }) {
           </div>
           <div className="flex flex-wrap gap-1">
             {character.personality.fears.map((f) => (
-              <Badge key={f} variant="ember">{f}</Badge>
+              <Badge key={f} variant="ember">
+                {f}
+              </Badge>
             ))}
           </div>
         </div>
