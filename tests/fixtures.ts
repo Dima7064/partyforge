@@ -61,7 +61,16 @@ export const fixtureData: GeneratorData = {
     { id: "t-m7", type: "motivation", name: "Отомстить предателю", tags: ["dark_fantasy"], description: null },
     { id: "t-m8", type: "motivation", name: "Найти дом", tags: ["heroic", "comedic"], description: null },
   ],
-  secrets: [],
+  secrets: [
+    { id: "s1", text: "Убил своего наставника.", tags: ["dark_fantasy", "rogue"] },
+    { id: "s2", text: "Носит ребёнка от человека, которого должна убить.", tags: ["dark_fantasy", "rogue"] },
+    { id: "s3", text: "Дезертир из армии.", tags: ["dark_fantasy", "fighter"] },
+    { id: "s4", text: "Всё ещё верит в бога, которому больше не служит.", tags: ["heroic", "cleric"] },
+    { id: "s5", text: "Продал друга за деньги.", tags: ["dark_fantasy", "rogue"] },
+    { id: "s6", text: "Не помнит своего прошлого.", tags: ["dark_fantasy", "wizard"] },
+    { id: "s7", text: "Служит двум хозяевам.", tags: ["dark_fantasy", "warlock"] },
+    { id: "s8", text: "Боится своей силы.", tags: ["dark_fantasy", "wizard"] },
+  ],
   hook_templates: [],
   tone_weights: [
     { id: "tw1", tone: "dark_fantasy", entity_type: "class", entity_id: "c1", weight: 3 },

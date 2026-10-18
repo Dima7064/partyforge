@@ -12,6 +12,7 @@ import { rollAbilities } from "./abilities";
 import { pickUniqueName } from "./names";
 import { generatePersonality } from "./personality";
 import { generateBackstory } from "./backstory";
+import { pickSecret } from "./secret";
 
 function buildToneWeightMap(data: GeneratorData, tone: string) {
   const map = new Map<string, number>();
@@ -86,6 +87,7 @@ export function generateCharacter(
   const name = pickUniqueName(race, ctx.rng, ctx.existingNames);
   const abilities = rollAbilities(cls.ability_priorities, ctx.rng);
   const personality = generatePersonality(data, input.tone, cls, ctx.rng);
+  const secret_text = pickSecret(data, input.tone, cls.name, ctx.rng);
 
   const partial: Omit<Character, "backstory"> = {
     name,
@@ -96,7 +98,7 @@ export function generateCharacter(
     role: cls.role,
     abilities,
     personality,
-    secret_text: "",
+    secret_text,
   };
 
   const backstory = generateBackstory(partial, input.tone, ctx.rng);

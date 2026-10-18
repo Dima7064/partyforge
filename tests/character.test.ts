@@ -84,6 +84,33 @@ describe("generateCharacter", () => {
     expect(Object.keys(char.abilities)).toHaveLength(6);
   });
 
+  it("заполняет personality и backstory", () => {
+    const rng = mulberry32(42);
+    const ctx = {
+      rng,
+      existingClassIds: new Set<string>(),
+      existingNames: new Set<string>(),
+    };
+    const char = generateCharacter(baseInput, fixtureData, ctx);
+    expect(char.personality.values.length).toBeGreaterThanOrEqual(2);
+    expect(char.personality.fears).toHaveLength(2);
+    expect(char.personality.habits).toHaveLength(2);
+    expect(char.personality.motivation.length).toBeGreaterThan(0);
+    expect(char.backstory.length).toBeGreaterThan(50);
+    expect(char.backstory).toContain(char.name);
+  });
+
+  it("заполняет secret_text", () => {
+    const rng = mulberry32(42);
+    const ctx = {
+      rng,
+      existingClassIds: new Set<string>(),
+      existingNames: new Set<string>(),
+    };
+    const char = generateCharacter(baseInput, fixtureData, ctx);
+    expect(char.secret_text.length).toBeGreaterThan(0);
+  });
+
   it("не повторяет классы в контексте", () => {
     const rng = mulberry32(1);
     const ctx = {
@@ -92,7 +119,6 @@ describe("generateCharacter", () => {
       existingNames: new Set<string>(),
     };
     const classes: string[] = [];
-    // 6 итераций = все 6 классов в фикстурах
     for (let i = 0; i < 6; i++) {
       const char = generateCharacter(baseInput, fixtureData, ctx);
       classes.push(char.class_name);
@@ -110,20 +136,26 @@ describe("generateCharacter", () => {
       return generateCharacter(baseInput, fixtureData, ctx);
     };
     expect(make(123)).toEqual(make(123));
-  })
-    it("заполняет personality и backstory", () => {
+  });
+
+  it("генерирует 4 персонажа подряд без ошибок", () => {
     const rng = mulberry32(42);
     const ctx = {
       rng,
       existingClassIds: new Set<string>(),
       existingNames: new Set<string>(),
     };
-    const char = generateCharacter(baseInput, fixtureData, ctx);
-    expect(char.personality.values.length).toBeGreaterThanOrEqual(2);
-    expect(char.personality.fears).toHaveLength(2);
-    expect(char.personality.habits).toHaveLength(2);
-    expect(char.personality.motivation.length).toBeGreaterThan(0);
-    expect(char.backstory.length).toBeGreaterThan(50);
-    expect(char.backstory).toContain(char.name);
-  });;
+    const party = Array.from({ length: 4 }, () =>
+      generateCharacter(baseInput, fixtureData, ctx),
+    );
+    expect(party).toHaveLength(4);
+    for (const c of party) {
+      expect(c.name.length).toBeGreaterThan(0);
+      expect(c.class_name.length).toBeGreaterThan(0);
+      expect(c.secret_text.length).toBeGreaterThan(0);
+      expect(c.backstory.length).toBeGreaterThan(50);
+    }
+    expect(new Set(party.map((c) => c.class_name)).size).toBe(4);
+    expect(new Set(party.map((c) => c.name)).size).toBe(4);
+  });
 });
