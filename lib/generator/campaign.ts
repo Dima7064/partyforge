@@ -1,20 +1,24 @@
-import type { Campaign, GeneratorInput } from "@/types/generator";
+import type { Campaign, GeneratorData, GeneratorInput, Rng } from "@/types/generator";
 import { generateBalancedParty } from "./balance";
 import { generateRelationships } from "./relationships";
 import { generateWorld } from "./world";
 import { generateHooks } from "./hooks";
+import { mulberry32, seedFromString } from "./random";
 
-export function generateCampaign(input: GeneratorInput): Campaign {
-  // 1. Сгенерировать сбалансированную партию
-  const characters = generateBalancedParty(input);
+export function generateCampaign(
+  input: GeneratorInput,
+  data: GeneratorData,
+  seed?: number | string,
+): Campaign {
+  const numericSeed =
+    typeof seed === "string"
+      ? seedFromString(seed)
+      : seed ?? Math.floor(Math.random() * 2 ** 32);
+  const rng = mulberry32(numericSeed);
 
-  // 2. Связи между персонажами
+  const characters = generateBalancedParty(input, data, rng);
   const relationships = generateRelationships(characters);
-
-  // 3. Мир: локации, фракции, NPC, ситуация
   const world = generateWorld(input, characters);
-
-  // 4. Промежуточная кампания без крючков
   const partial: Omit<Campaign, "hooks"> = {
     input,
     characters,
@@ -25,8 +29,6 @@ export function generateCampaign(input: GeneratorInput): Campaign {
     npcs: world.npcs,
     situation: world.situation,
   };
-
-  // 5. Крючки
   const hooks = generateHooks(partial);
 
   return { ...partial, hooks };
