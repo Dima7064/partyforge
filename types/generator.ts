@@ -1,0 +1,157 @@
+// ============================================
+// Вход генератора
+// ============================================
+
+export type Tone =
+  | "dark_fantasy"
+  | "heroic"
+  | "comedic"
+  | "political"
+  | "wild"
+  | "religious";
+
+export type CharacterRole = "tank" | "healer" | "dps" | "face" | "control" | "support";
+
+export type RelationshipType = "trust" | "debt" | "love" | "conflict" | "secret";
+
+export type HookType = "personal" | "social" | "exploration" | "combat";
+
+export type ConnectionType = "born" | "lost" | "served" | "dreams";
+
+export type FactionAttitude = "ally" | "enemy" | "neutral";
+
+export type NpcRole = "ally" | "enemy" | "neutral";
+
+export interface Constraints {
+  no_evil?: boolean;
+  no_pvp?: boolean;
+  banned_races?: string[];
+  banned_classes?: string[];
+}
+
+export interface GeneratorInput {
+  system: string; // "dnd5e"
+  level: number;
+  tone: Tone;
+  party_size: number;
+  world: string; // "custom" | название готового мира
+  constraints: Constraints;
+  duration: "one_shot" | "mini_campaign" | "long_campaign";
+}
+
+// ============================================
+// Характеристики D&D
+// ============================================
+
+export type Ability =
+  | "str"
+  | "dex"
+  | "con"
+  | "int"
+  | "wis"
+  | "cha";
+
+export type Abilities = Record<Ability, number>;
+
+// ============================================
+// Персонаж
+// ============================================
+
+export interface Personality {
+  values: string[];
+  fears: string[];
+  habits: string[];
+  motivation: string;
+}
+
+export interface Character {
+  id?: string; // появляется после сохранения в БД
+  name: string;
+  class_name: string;
+  race_name: string;
+  background_name: string;
+  level: number;
+  role: CharacterRole;
+  abilities: Abilities;
+  personality: Personality;
+  backstory: string;
+  secret_text: string;
+}
+
+// ============================================
+// Связи между персонажами
+// ============================================
+
+export interface Relationship {
+  source_character_index: number; // индекс в массиве characters
+  target_character_index: number;
+  type: RelationshipType;
+  description: string;
+}
+
+// ============================================
+// Мир
+// ============================================
+
+export interface Location {
+  name: string;
+  type: string; // "city" | "temple" | "forest" | "ruins"
+  description: string;
+}
+
+export interface CharacterLocation {
+  character_index: number;
+  location_index: number;
+  connection_type: ConnectionType;
+}
+
+export interface Faction {
+  name: string;
+  goals: string;
+  attitude: FactionAttitude;
+  description: string;
+}
+
+export interface Npc {
+  name: string;
+  role: NpcRole;
+  description: string;
+  location_index?: number;
+  faction_index?: number;
+}
+
+// ============================================
+// Крючки
+// ============================================
+
+export interface Hook {
+  title: string;
+  description: string;
+  type: HookType;
+  character_index?: number; // центр крючка
+}
+
+// ============================================
+// Кампания (результат генерации)
+// ============================================
+
+export interface Campaign {
+  input: GeneratorInput;
+  characters: Character[];
+  relationships: Relationship[];
+  locations: Location[];
+  character_locations: CharacterLocation[];
+  factions: Faction[];
+  npcs: Npc[];
+  situation: string;
+  hooks: Hook[];
+}
+
+// ============================================
+// Результат с share-кодом (после сохранения в БД)
+// ============================================
+
+export interface SavedCampaign {
+  share_code: string;
+  campaign: Campaign;
+}
