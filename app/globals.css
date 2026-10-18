@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* Фэнтези-палитра PartyForge */
   --color-forge-bg: #0f0d0a;
   --color-forge-surface: #1a1613;
   --color-forge-border: #2e2620;
@@ -22,12 +21,7 @@ body {
   font-family: var(--font-inter), system-ui, sans-serif;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-cinzel), serif;
   letter-spacing: 0.02em;
 }
