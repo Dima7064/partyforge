@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getToneWeights } from "@/lib/db/catalog";
 
+export const dynamic = "force-dynamic";
+
+
 export async function GET() {
   try {
     const weights = await getToneWeights();

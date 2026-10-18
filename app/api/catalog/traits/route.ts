@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTraits } from "@/lib/db/catalog";
 
+export const dynamic = "force-dynamic";
+
+
 export async function GET(req: NextRequest) {
   try {
     const type = req.nextUrl.searchParams.get("type");
