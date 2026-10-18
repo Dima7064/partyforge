@@ -2,8 +2,6 @@ import { getClasses, getRaces, getBackgrounds, getTraits, getSecrets, getHookTem
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const dynamic = "force-dynamic";
-
 export default async function CatalogPage() {
   const [classes, races, backgrounds, traits, secrets, hookTemplates, toneWeights] =
     await Promise.all([
