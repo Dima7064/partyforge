@@ -1,17 +1,28 @@
-import type { Character, GeneratorInput } from "@/types/generator";
+import type {
+  Character,
+  GeneratorData,
+  GeneratorInput,
+  Rng,
+} from "@/types/generator";
+import { generateCharacter } from "./character";
 
-export function generateBalancedParty(input: GeneratorInput): Character[] {
-  throw new Error("generateBalancedParty: not implemented yet");
-}
+export function generateBalancedParty(
+  input: GeneratorInput,
+  data: GeneratorData,
+  rng: Rng,
+): Character[] {
+  const characters: Character[] = [];
+  const existingIds = new Set<string>();
+  const existingNames = new Set<string>();
 
-export function validateRoles(characters: Character[]): boolean {
-  throw new Error("validateRoles: not implemented yet");
-}
+  for (let i = 0; i < input.party_size; i++) {
+    const char = generateCharacter(input, data, {
+      rng,
+      existingIds,
+      existingNames,
+    });
+    characters.push(char);
+  }
 
-export function scoreSynergy(characters: Character[]): number {
-  throw new Error("scoreSynergy: not implemented yet");
-}
-
-export function scoreDiversity(characters: Character[]): number {
-  throw new Error("scoreDiversity: not implemented yet");
+  return characters;
 }

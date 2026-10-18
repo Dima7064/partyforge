@@ -155,3 +155,75 @@ export interface SavedCampaign {
   share_code: string;
   campaign: Campaign;
 }
+
+// ============================================
+// Каталог (данные из БД для генератора)
+// ============================================
+
+export interface ClassRow {
+  id: string;
+  name: string;
+  role: CharacterRole;
+  ability_priorities: Ability[];
+  tone_tags: string[];
+  description: string;
+}
+
+export interface RaceRow {
+  id: string;
+  name: string;
+  tone_tags: string[];
+  description: string;
+}
+
+export interface BackgroundRow {
+  id: string;
+  name: string;
+  tone_tags: string[];
+  description: string;
+}
+
+export interface TraitRow {
+  id: string;
+  type: "value" | "fear" | "habit" | "motivation";
+  name: string;
+  tags: string[];
+  description: string | null;
+}
+
+export interface SecretRow {
+  id: string;
+  text: string;
+  tags: string[];
+}
+
+export interface HookTemplateRow {
+  id: string;
+  template: string;
+  type: HookType;
+  tags: string[];
+}
+
+export interface ToneWeightRow {
+  id: string;
+  tone: Tone;
+  entity_type: "class" | "race" | "trait";
+  entity_id: string;
+  weight: number;
+}
+
+export interface GeneratorData {
+  classes: ClassRow[];
+  races: RaceRow[];
+  backgrounds: BackgroundRow[];
+  traits: TraitRow[];
+  secrets: SecretRow[];
+  hook_templates: HookTemplateRow[];
+  tone_weights: ToneWeightRow[];
+}
+
+// ============================================
+// RNG
+// ============================================
+
+export type Rng = () => number;
