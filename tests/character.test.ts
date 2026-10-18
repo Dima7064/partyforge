@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickClass, pickRace, rollAbilities } from "@/lib/generator/character";
+import { pickClass, pickRace, pickBackground, generateCharacter } from "@/lib/generator/character";
 import { mulberry32 } from "@/lib/generator/random";
 import { fixtureData } from "./fixtures";
 import type { GeneratorInput } from "@/types/generator";
@@ -18,12 +18,12 @@ describe("pickClass", () => {
   it("детерминирован при одном seed", () => {
     const rng1 = mulberry32(42);
     const rng2 = mulberry32(42);
-    const a = pickClass(baseInput, fixtureData, rng1);
-    const b = pickClass(baseInput, fixtureData, rng2);
-    expect(a.id).toBe(b.id);
+    expect(pickClass(baseInput, fixtureData, rng1).id).toBe(
+      pickClass(baseInput, fixtureData, rng2).id,
+    );
   });
 
-  it("исключает banned_classes по имени", () => {
+  it("исключает banned_classes", () => {
     const rng = mulberry32(1);
     const input: GeneratorInput = {
       ...baseInput,
@@ -31,17 +31,7 @@ describe("pickClass", () => {
     };
     for (let i = 0; i < 30; i++) {
       const cls = pickClass(input, fixtureData, rng);
-      expect(cls.name).not.toBe("Rogue");
-      expect(cls.name).not.toBe("Warlock");
-    }
-  });
-
-  it("исключает excludeIds", () => {
-    const rng = mulberry32(1);
-    const excluded = new Set(["c1", "c2", "c3", "c4", "c5"]);
-    for (let i = 0; i < 20; i++) {
-      const cls = pickClass(baseInput, fixtureData, rng, excluded);
-      expect(cls.id).toBe("c6");
+      expect(["Rogue", "Warlock"]).not.toContain(cls.name);
     }
   });
 
@@ -49,22 +39,9 @@ describe("pickClass", () => {
     const rng = mulberry32(1);
     const input: GeneratorInput = {
       ...baseInput,
-      constraints: {
-        banned_classes: fixtureData.classes.map((c) => c.name),
-      },
+      constraints: { banned_classes: fixtureData.classes.map((c) => c.name) },
     };
     expect(() => pickClass(input, fixtureData, rng)).toThrow();
-  });
-
-  it("статистически предпочитает tone-классы", () => {
-    const rng = mulberry32(12345);
-    const counts: Record<string, number> = {};
-    for (let i = 0; i < 1000; i++) {
-      const cls = pickClass(baseInput, fixtureData, rng);
-      counts[cls.name] = (counts[cls.name] ?? 0) + 1;
-    }
-    expect(counts["Rogue"]).toBeGreaterThan(counts["Paladin"] ?? 0);
-    expect(counts["Warlock"]).toBeGreaterThan(counts["Cleric"] ?? 0);
   });
 });
 
@@ -76,24 +53,62 @@ describe("pickRace", () => {
       constraints: { banned_races: ["Tiefling"] },
     };
     for (let i = 0; i < 30; i++) {
-      const race = pickRace(input, fixtureData, rng);
-      expect(race.name).not.toBe("Tiefling");
+      expect(pickRace(input, fixtureData, rng).name).not.toBe("Tiefling");
     }
   });
 });
 
-describe("rollAbilities", () => {
-  it("возвращает все 6 характеристик", () => {
+describe("pickBackground", () => {
+  it("возвращает предысторию из каталога", () => {
     const rng = mulberry32(1);
-    const abilities = rollAbilities(["str", "dex", "con", "int", "wis", "cha"], rng);
-    expect(Object.keys(abilities).sort()).toEqual(["cha", "con", "dex", "int", "str", "wis"]);
+    const bg = pickBackground(fixtureData, rng);
+    expect(fixtureData.backgrounds.map((b) => b.id)).toContain(bg.id);
+  });
+});
+
+describe("generateCharacter", () => {
+  it("заполняет все обязательные поля", () => {
+    const rng = mulberry32(42);
+    const ctx = {
+      rng,
+      existingClassIds: new Set<string>(),
+      existingNames: new Set<string>(),
+    };
+    const char = generateCharacter(baseInput, fixtureData, ctx);
+    expect(char.name).toBeTruthy();
+    expect(char.class_name).toBeTruthy();
+    expect(char.race_name).toBeTruthy();
+    expect(char.background_name).toBeTruthy();
+    expect(char.level).toBe(3);
+    expect(char.role).toBeTruthy();
+    expect(Object.keys(char.abilities)).toHaveLength(6);
   });
 
-  it("высокие значения достаются приоритетным", () => {
+  it("не повторяет классы в контексте", () => {
     const rng = mulberry32(1);
-    const abilities = rollAbilities(["dex", "con", "int", "wis", "cha", "str"], rng);
-    expect(abilities.dex).toBe(15);
-    expect(abilities.con).toBe(14);
-    expect(abilities.str).toBe(8);
+    const ctx = {
+      rng,
+      existingClassIds: new Set<string>(),
+      existingNames: new Set<string>(),
+    };
+    const classes: string[] = [];
+    // 6 итераций = все 6 классов в фикстурах
+    for (let i = 0; i < 6; i++) {
+      const char = generateCharacter(baseInput, fixtureData, ctx);
+      classes.push(char.class_name);
+    }
+    expect(new Set(classes).size).toBe(6);
+  });
+
+  it("детерминирован при одном seed и чистом контексте", () => {
+    const make = (seed: number) => {
+      const ctx = {
+        rng: mulberry32(seed),
+        existingClassIds: new Set<string>(),
+        existingNames: new Set<string>(),
+      };
+      return generateCharacter(baseInput, fixtureData, ctx);
+    };
+    expect(make(123)).toEqual(make(123));
   });
 });

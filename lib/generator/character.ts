@@ -1,8 +1,7 @@
 import type {
-  Abilities,
-  Ability,
   BackgroundRow,
   Character,
+  CharacterRole,
   ClassRow,
   GeneratorData,
   GeneratorInput,
@@ -10,6 +9,8 @@ import type {
   Rng,
 } from "@/types/generator";
 import { pickWeighted, type Weighted } from "./random";
+import { rollAbilities } from "./abilities";
+import { pickUniqueName } from "./names";
 
 function buildToneWeightMap(data: GeneratorData, tone: string) {
   const map = new Map<string, number>();
@@ -30,10 +31,7 @@ export function pickClass(
 
   const candidates: Weighted<ClassRow>[] = data.classes
     .filter((c) => !banned.has(c.name) && !excludeIds.has(c.id))
-    .map((c) => ({
-      item: c,
-      weight: toneMap.get(c.id) ?? 1.0,
-    }));
+    .map((c) => ({ item: c, weight: toneMap.get(c.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
     throw new Error("pickClass: нет доступных классов после фильтров");
@@ -52,10 +50,7 @@ export function pickRace(
 
   const candidates: Weighted<RaceRow>[] = data.races
     .filter((r) => !banned.has(r.name))
-    .map((r) => ({
-      item: r,
-      weight: toneMap.get(r.id) ?? 1.0,
-    }));
+    .map((r) => ({ item: r, weight: toneMap.get(r.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
     throw new Error("pickRace: нет доступных рас после фильтров");
@@ -64,29 +59,16 @@ export function pickRace(
   return pickWeighted(candidates, rng);
 }
 
-const FIRST_NAMES = [
-  "Кайрен", "Мира", "Торн", "Элара", "Гарат", "Лиан", "Сора", "Дариус",
-  "Нэрис", "Бран", "Вела", "Ксав", "Инара", "Рэй", "Тавия", "Освальд",
-];
-
-export function pickName(rng: Rng): string {
-  return FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)];
-}
-
-const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-
-export function rollAbilities(priorities: Ability[], rng: Rng): Abilities {
-  const arr = [...STANDARD_ARRAY];
-  const result: Partial<Abilities> = {};
-  for (const ability of priorities) {
-    result[ability] = arr.shift()!;
-  }
-  return result as Abilities;
+export function pickBackground(
+  data: GeneratorData,
+  rng: Rng,
+): BackgroundRow {
+  return data.backgrounds[Math.floor(rng() * data.backgrounds.length)];
 }
 
 export interface CharacterContext {
   rng: Rng;
-  existingIds: Set<string>;
+  existingClassIds: Set<string>;
   existingNames: Set<string>;
 }
 
@@ -95,25 +77,12 @@ export function generateCharacter(
   data: GeneratorData,
   ctx: CharacterContext,
 ): Character {
-  const cls = pickClass(input, data, ctx.rng, ctx.existingIds);
-  ctx.existingIds.add(cls.id);
+  const cls = pickClass(input, data, ctx.rng, ctx.existingClassIds);
+  ctx.existingClassIds.add(cls.id);
 
   const race = pickRace(input, data, ctx.rng);
-
-  const backgroundPool = data.backgrounds;
-  const background = backgroundPool.length > 0
-    ? backgroundPool[Math.floor(ctx.rng() * backgroundPool.length)]
-    : data.backgrounds[0];
-
-  let name = pickName(ctx.rng);
-  let attempts = 0;
-  while (ctx.existingNames.has(name) && attempts < 20) {
-    name = pickName(ctx.rng);
-    attempts++;
-  }
-  if (ctx.existingNames.has(name)) name = `${name}-${ctx.existingNames.size}`;
-  ctx.existingNames.add(name);
-
+  const background = pickBackground(data, ctx.rng);
+  const name = pickUniqueName(race, ctx.rng, ctx.existingNames);
   const abilities = rollAbilities(cls.ability_priorities, ctx.rng);
 
   return {
