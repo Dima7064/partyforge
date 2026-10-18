@@ -227,3 +227,21 @@ export interface GeneratorData {
 // ============================================
 
 export type Rng = () => number;
+
+// ============================================
+// Сохранённая кампания (из БД)
+// ============================================
+
+export interface SavedCampaignData {
+  id: string;
+  share_code: string;
+  input: GeneratorInput;
+  characters: Character[];
+  relationships: Relationship[];
+  locations: Location[];
+  character_locations: CharacterLocation[];
+  factions: Faction[];
+  npcs: Npc[];
+  situation: string;
+  hooks: Hook[];
+}
