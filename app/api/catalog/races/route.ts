@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRaces } from "@/lib/db/catalog";
 
-export const dynamic = "force-dynamic";
-
 
 export async function GET() {
   try {
