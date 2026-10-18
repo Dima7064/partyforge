@@ -110,5 +110,20 @@ describe("generateCharacter", () => {
       return generateCharacter(baseInput, fixtureData, ctx);
     };
     expect(make(123)).toEqual(make(123));
-  });
+  })
+    it("заполняет personality и backstory", () => {
+    const rng = mulberry32(42);
+    const ctx = {
+      rng,
+      existingClassIds: new Set<string>(),
+      existingNames: new Set<string>(),
+    };
+    const char = generateCharacter(baseInput, fixtureData, ctx);
+    expect(char.personality.values.length).toBeGreaterThanOrEqual(2);
+    expect(char.personality.fears).toHaveLength(2);
+    expect(char.personality.habits).toHaveLength(2);
+    expect(char.personality.motivation.length).toBeGreaterThan(0);
+    expect(char.backstory.length).toBeGreaterThan(50);
+    expect(char.backstory).toContain(char.name);
+  });;
 });

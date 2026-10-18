@@ -20,7 +20,47 @@ export const fixtureData: GeneratorData = {
     { id: "b2", name: "Criminal", tone_tags: [], description: "" },
     { id: "b3", name: "Soldier", tone_tags: [], description: "" },
   ],
-  traits: [],
+  traits: [
+    // values
+    { id: "t-v1", type: "value", name: "Справедливость", tags: ["heroic", "religious"], description: null },
+    { id: "t-v2", type: "value", name: "Свобода", tags: ["wild", "comedic"], description: null },
+    { id: "t-v3", type: "value", name: "Власть", tags: ["dark_fantasy", "political"], description: null },
+    { id: "t-v4", type: "value", name: "Порядок", tags: ["political", "religious"], description: null },
+    { id: "t-v5", type: "value", name: "Искупление", tags: ["religious", "dark_fantasy"], description: null },
+    { id: "t-v6", type: "value", name: "Дружба", tags: ["heroic", "comedic"], description: null },
+    { id: "t-v7", type: "value", name: "Одиночество", tags: ["dark_fantasy", "wild"], description: null },
+    { id: "t-v8", type: "value", name: "Тайна", tags: ["dark_fantasy", "political"], description: null },
+
+    // fears
+    { id: "t-f1", type: "fear", name: "Стать чудовищем", tags: ["dark_fantasy"], description: null },
+    { id: "t-f2", type: "fear", name: "Быть брошенным", tags: ["dark_fantasy", "religious"], description: null },
+    { id: "t-f3", type: "fear", name: "Смерть", tags: ["heroic", "dark_fantasy"], description: null },
+    { id: "t-f4", type: "fear", name: "Предательство", tags: ["political"], description: null },
+    { id: "t-f5", type: "fear", name: "Потерять контроль", tags: ["wild"], description: null },
+    { id: "t-f6", type: "fear", name: "Неизвестность", tags: ["wild"], description: null },
+    { id: "t-f7", type: "fear", name: "Унижение", tags: ["comedic"], description: null },
+    { id: "t-f8", type: "fear", name: "Одиночество", tags: ["dark_fantasy"], description: null },
+
+    // habits
+    { id: "t-h1", type: "habit", name: "Грызёт ногти", tags: ["comedic"], description: null },
+    { id: "t-h2", type: "habit", name: "Играет с монетой", tags: ["political"], description: null },
+    { id: "t-h3", type: "habit", name: "Молится перед сном", tags: ["religious", "heroic"], description: null },
+    { id: "t-h4", type: "habit", name: "Чистит оружие", tags: ["heroic"], description: null },
+    { id: "t-h5", type: "habit", name: "Молчит в толпе", tags: ["dark_fantasy"], description: null },
+    { id: "t-h6", type: "habit", name: "Поёт под нос", tags: ["comedic"], description: null },
+    { id: "t-h7", type: "habit", name: "Пьёт перед боем", tags: ["dark_fantasy", "wild"], description: null },
+    { id: "t-h8", type: "habit", name: "Ведёт дневник", tags: ["political"], description: null },
+
+    // motivations
+    { id: "t-m1", type: "motivation", name: "Найти убийцу семьи", tags: ["dark_fantasy", "heroic"], description: null },
+    { id: "t-m2", type: "motivation", name: "Искупить прошлое", tags: ["religious", "dark_fantasy"], description: null },
+    { id: "t-m3", type: "motivation", name: "Защитить невинных", tags: ["heroic", "paladin"], description: null },
+    { id: "t-m4", type: "motivation", name: "Разбогатеть", tags: ["political", "comedic"], description: null },
+    { id: "t-m5", type: "motivation", name: "Стать легендой", tags: ["heroic"], description: null },
+    { id: "t-m6", type: "motivation", name: "Найти себя", tags: ["wild"], description: null },
+    { id: "t-m7", type: "motivation", name: "Отомстить предателю", tags: ["dark_fantasy"], description: null },
+    { id: "t-m8", type: "motivation", name: "Найти дом", tags: ["heroic", "comedic"], description: null },
+  ],
   secrets: [],
   hook_templates: [],
   tone_weights: [

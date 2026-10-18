@@ -1,7 +1,6 @@
 import type {
   BackgroundRow,
   Character,
-  CharacterRole,
   ClassRow,
   GeneratorData,
   GeneratorInput,
@@ -11,6 +10,8 @@ import type {
 import { pickWeighted, type Weighted } from "./random";
 import { rollAbilities } from "./abilities";
 import { pickUniqueName } from "./names";
+import { generatePersonality } from "./personality";
+import { generateBackstory } from "./backstory";
 
 function buildToneWeightMap(data: GeneratorData, tone: string) {
   const map = new Map<string, number>();
@@ -84,8 +85,9 @@ export function generateCharacter(
   const background = pickBackground(data, ctx.rng);
   const name = pickUniqueName(race, ctx.rng, ctx.existingNames);
   const abilities = rollAbilities(cls.ability_priorities, ctx.rng);
+  const personality = generatePersonality(data, input.tone, cls, ctx.rng);
 
-  return {
+  const partial: Omit<Character, "backstory"> = {
     name,
     class_name: cls.name,
     race_name: race.name,
@@ -93,13 +95,11 @@ export function generateCharacter(
     level: input.level,
     role: cls.role,
     abilities,
-    personality: {
-      values: [],
-      fears: [],
-      habits: [],
-      motivation: "",
-    },
-    backstory: "",
+    personality,
     secret_text: "",
   };
+
+  const backstory = generateBackstory(partial, input.tone, ctx.rng);
+
+  return { ...partial, backstory };
 }
