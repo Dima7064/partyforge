@@ -42,18 +42,14 @@ export async function getTraits() {
 
 export async function getSecrets() {
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("secrets")
-    .select("id, text, tags");
+  const { data, error } = await supabase.from("secrets").select("id, text, tags");
   if (error) throw error;
   return data;
 }
 
 export async function getHookTemplates() {
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("hook_templates")
-    .select("id, template, type, tags");
+  const { data, error } = await supabase.from("hook_templates").select("id, template, type, tags");
   if (error) throw error;
   return data;
 }

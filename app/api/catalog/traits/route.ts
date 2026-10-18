@@ -11,9 +11,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: traits });
   } catch (e) {
     console.error("GET /api/catalog/traits failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить черты" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Не удалось загрузить черты" }, { status: 500 });
   }
 }

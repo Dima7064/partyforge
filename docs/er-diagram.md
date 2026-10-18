@@ -174,3 +174,4 @@ erDiagram
         uuid entity_id
         numeric weight
     }
+```

@@ -7,9 +7,6 @@ export async function GET() {
     return NextResponse.json({ data: classes });
   } catch (e) {
     console.error("GET /api/catalog/classes failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить классы" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Не удалось загрузить классы" }, { status: 500 });
   }
 }

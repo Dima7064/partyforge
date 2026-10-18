@@ -7,9 +7,6 @@ export async function GET() {
     return NextResponse.json({ data: secrets });
   } catch (e) {
     console.error("GET /api/catalog/secrets failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить тайны" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Не удалось загрузить тайны" }, { status: 500 });
   }
 }

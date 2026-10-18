@@ -7,9 +7,6 @@ export async function GET() {
     return NextResponse.json({ data: templates });
   } catch (e) {
     console.error("GET /api/catalog/hook-templates failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить шаблоны крючков" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Не удалось загрузить шаблоны крючков" }, { status: 500 });
   }
 }

@@ -17,12 +17,8 @@ export default function DesignPage() {
   return (
     <main className="min-h-screen p-8 max-w-5xl mx-auto space-y-12">
       <div>
-        <h1 className="text-4xl font-bold text-forge-gold-light mb-2">
-          Дизайн-система PartyForge
-        </h1>
-        <p className="text-forge-muted">
-          Песочница компонентов. Здесь смотрим, как всё выглядит.
-        </p>
+        <h1 className="text-4xl font-bold text-forge-gold-light mb-2">Дизайн-система PartyForge</h1>
+        <p className="text-forge-muted">Песочница компонентов. Здесь смотрим, как всё выглядит.</p>
       </div>
 
       <section className="space-y-4">
@@ -55,8 +51,12 @@ export default function DesignPage() {
               </p>
             </CardContent>
             <CardFooter>
-              <Button size="sm" variant="outline">Подробнее</Button>
-              <Button size="sm" variant="ghost">Перегенерировать</Button>
+              <Button size="sm" variant="outline">
+                Подробнее
+              </Button>
+              <Button size="sm" variant="ghost">
+                Перегенерировать
+              </Button>
             </CardFooter>
           </Card>
           <Card>
@@ -70,7 +70,9 @@ export default function DesignPage() {
               </p>
             </CardContent>
             <CardFooter>
-              <Button size="sm" variant="outline">Подробнее</Button>
+              <Button size="sm" variant="outline">
+                Подробнее
+              </Button>
             </CardFooter>
           </Card>
         </div>
@@ -86,7 +88,9 @@ export default function DesignPage() {
           <div>
             <Label htmlFor="class">Класс</Label>
             <Select id="class" defaultValue="">
-              <option value="" disabled>Выберите класс</option>
+              <option value="" disabled>
+                Выберите класс
+              </option>
               <option value="fighter">Воин</option>
               <option value="wizard">Маг</option>
               <option value="rogue">Плут</option>

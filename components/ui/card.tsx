@@ -15,9 +15,7 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3 className={cn("text-lg font-semibold text-forge-gold-light", className)} {...props} />
-  );
+  return <h3 className={cn("text-lg font-semibold text-forge-gold-light", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
@@ -30,9 +28,6 @@ export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivEleme
 
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("p-5 border-t border-forge-border flex gap-2", className)}
-      {...props}
-    />
+    <div className={cn("p-5 border-t border-forge-border flex gap-2", className)} {...props} />
   );
 }

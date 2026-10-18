@@ -7,9 +7,6 @@ export async function GET() {
     return NextResponse.json({ data: weights });
   } catch (e) {
     console.error("GET /api/catalog/tone-weights failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить tone-веса" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Не удалось загрузить tone-веса" }, { status: 500 });
   }
 }
