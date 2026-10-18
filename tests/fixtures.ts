@@ -21,7 +21,6 @@ export const fixtureData: GeneratorData = {
     { id: "b3", name: "Soldier", tone_tags: [], description: "" },
   ],
   traits: [
-    // values
     { id: "t-v1", type: "value", name: "Справедливость", tags: ["heroic", "religious"], description: null },
     { id: "t-v2", type: "value", name: "Свобода", tags: ["wild", "comedic"], description: null },
     { id: "t-v3", type: "value", name: "Власть", tags: ["dark_fantasy", "political"], description: null },
@@ -31,7 +30,6 @@ export const fixtureData: GeneratorData = {
     { id: "t-v7", type: "value", name: "Одиночество", tags: ["dark_fantasy", "wild"], description: null },
     { id: "t-v8", type: "value", name: "Тайна", tags: ["dark_fantasy", "political"], description: null },
 
-    // fears
     { id: "t-f1", type: "fear", name: "Стать чудовищем", tags: ["dark_fantasy"], description: null },
     { id: "t-f2", type: "fear", name: "Быть брошенным", tags: ["dark_fantasy", "religious"], description: null },
     { id: "t-f3", type: "fear", name: "Смерть", tags: ["heroic", "dark_fantasy"], description: null },
@@ -41,7 +39,6 @@ export const fixtureData: GeneratorData = {
     { id: "t-f7", type: "fear", name: "Унижение", tags: ["comedic"], description: null },
     { id: "t-f8", type: "fear", name: "Одиночество", tags: ["dark_fantasy"], description: null },
 
-    // habits
     { id: "t-h1", type: "habit", name: "Грызёт ногти", tags: ["comedic"], description: null },
     { id: "t-h2", type: "habit", name: "Играет с монетой", tags: ["political"], description: null },
     { id: "t-h3", type: "habit", name: "Молится перед сном", tags: ["religious", "heroic"], description: null },
@@ -51,7 +48,6 @@ export const fixtureData: GeneratorData = {
     { id: "t-h7", type: "habit", name: "Пьёт перед боем", tags: ["dark_fantasy", "wild"], description: null },
     { id: "t-h8", type: "habit", name: "Ведёт дневник", tags: ["political"], description: null },
 
-    // motivations
     { id: "t-m1", type: "motivation", name: "Найти убийцу семьи", tags: ["dark_fantasy", "heroic"], description: null },
     { id: "t-m2", type: "motivation", name: "Искупить прошлое", tags: ["religious", "dark_fantasy"], description: null },
     { id: "t-m3", type: "motivation", name: "Защитить невинных", tags: ["heroic", "paladin"], description: null },
@@ -71,7 +67,18 @@ export const fixtureData: GeneratorData = {
     { id: "s7", text: "Служит двум хозяевам.", tags: ["dark_fantasy", "warlock"] },
     { id: "s8", text: "Боится своей силы.", tags: ["dark_fantasy", "wizard"] },
   ],
-  hook_templates: [],
+  hook_templates: [
+    { id: "ht1", template: "{character} получает письмо от {npc} с просьбой о помощи.", type: "personal", tags: ["dark_fantasy", "heroic"] },
+    { id: "ht2", template: "{character} узнаёт, что {faction} охотится за ним.", type: "social", tags: ["political", "dark_fantasy"] },
+    { id: "ht3", template: "{character} находит карту к {location}.", type: "exploration", tags: ["wild", "heroic"] },
+    { id: "ht4", template: "{character} встречает старого врага — {npc}.", type: "combat", tags: ["dark_fantasy", "heroic"] },
+    { id: "ht5", template: "{character} получает предложение от {faction}: предать партию.", type: "social", tags: ["political", "dark_fantasy"] },
+    { id: "ht6", template: "{character} видит сон о {location}.", type: "exploration", tags: ["religious", "dark_fantasy"] },
+    { id: "ht7", template: "{character} находит реликвию, которая связана с его прошлым, в {location}.", type: "personal", tags: ["dark_fantasy", "heroic"] },
+    { id: "ht8", template: "{npc} просит {character} спасти {location}.", type: "personal", tags: ["heroic", "religious"] },
+    { id: "ht9", template: "{character} узнаёт тайну {npc}.", type: "social", tags: ["political", "dark_fantasy"] },
+    { id: "ht10", template: "{character} должен выбрать между {faction} и партией.", type: "social", tags: ["political", "dark_fantasy"] },
+  ],
   tone_weights: [
     { id: "tw1", tone: "dark_fantasy", entity_type: "class", entity_id: "c1", weight: 3 },
     { id: "tw2", tone: "dark_fantasy", entity_type: "class", entity_id: "c2", weight: 3 },
