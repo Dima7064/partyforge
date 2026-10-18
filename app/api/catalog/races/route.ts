@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRaces } from "@/lib/db/catalog";
 
+
 export async function GET() {
   try {
     const races = await getRaces();

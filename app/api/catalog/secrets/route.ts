@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSecrets } from "@/lib/db/catalog";
 
+
 export async function GET() {
   try {
     const secrets = await getSecrets();

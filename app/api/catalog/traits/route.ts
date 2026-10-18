@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTraits } from "@/lib/db/catalog";
 
+
 export async function GET(req: NextRequest) {
   try {
-    const type = req.nextUrl.searchParams.get("type");
+    const type = new URL(req.url).searchParams.get("type");
     let traits = await getTraits();
     if (type) {
       traits = traits.filter((t) => t.type === type);

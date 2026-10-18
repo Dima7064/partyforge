@@ -15,9 +15,12 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center flex-wrap">
+          <Link href="/catalog">
+            <Button size="lg">Каталог</Button>
+          </Link>
           <Link href="/design">
-            <Button size="lg">Дизайн-система</Button>
+            <Button size="lg" variant="outline">Дизайн-система</Button>
           </Link>
         </div>
 

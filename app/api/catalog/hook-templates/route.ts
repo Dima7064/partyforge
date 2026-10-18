@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHookTemplates } from "@/lib/db/catalog";
 
+
 export async function GET() {
   try {
     const templates = await getHookTemplates();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClasses } from "@/lib/db/catalog";
 
+
 export async function GET() {
   try {
     const classes = await getClasses();
