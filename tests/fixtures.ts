@@ -2,23 +2,23 @@ import type { GeneratorData } from "@/types/generator";
 
 export const fixtureData: GeneratorData = {
   classes: [
-    { id: "c1", name: "Rogue", role: "dps", ability_priorities: ["dex", "con", "int", "wis", "cha", "str"], tone_tags: ["dark"], description: "" },
-    { id: "c2", name: "Warlock", role: "dps", ability_priorities: ["cha", "con", "dex", "wis", "int", "str"], tone_tags: ["dark"], description: "" },
-    { id: "c3", name: "Paladin", role: "tank", ability_priorities: ["str", "cha", "con", "wis", "dex", "int"], tone_tags: ["heroic"], description: "" },
-    { id: "c4", name: "Fighter", role: "tank", ability_priorities: ["str", "con", "dex", "wis", "cha", "int"], tone_tags: ["heroic"], description: "" },
-    { id: "c5", name: "Cleric", role: "healer", ability_priorities: ["wis", "con", "str", "dex", "cha", "int"], tone_tags: ["heroic"], description: "" },
-    { id: "c6", name: "Wizard", role: "control", ability_priorities: ["int", "con", "dex", "wis", "cha", "str"], tone_tags: ["dark"], description: "" },
+    { id: "c1", name: "Rogue", name_ru: "Плут", role: "dps", ability_priorities: ["dex", "con", "int", "wis", "cha", "str"], tone_tags: ["dark"], theme: ["classic"], description: "" },
+    { id: "c2", name: "Warlock", name_ru: "Колдун", role: "dps", ability_priorities: ["cha", "con", "dex", "wis", "int", "str"], tone_tags: ["dark"], theme: ["classic"], description: "" },
+    { id: "c3", name: "Paladin", name_ru: "Паладин", role: "tank", ability_priorities: ["str", "cha", "con", "wis", "dex", "int"], tone_tags: ["heroic"], theme: ["classic"], description: "" },
+    { id: "c4", name: "Fighter", name_ru: "Воин", role: "tank", ability_priorities: ["str", "con", "dex", "wis", "cha", "int"], tone_tags: ["heroic"], theme: ["classic"], description: "" },
+    { id: "c5", name: "Cleric", name_ru: "Жрец", role: "healer", ability_priorities: ["wis", "con", "str", "dex", "cha", "int"], tone_tags: ["heroic"], theme: ["classic"], description: "" },
+    { id: "c6", name: "Wizard", name_ru: "Волшебник", role: "control", ability_priorities: ["int", "con", "dex", "wis", "cha", "str"], tone_tags: ["dark"], theme: ["classic"], description: "" },
   ],
   races: [
-    { id: "r1", name: "Human", tone_tags: ["heroic"], description: "" },
-    { id: "r2", name: "Elf", tone_tags: ["wild"], description: "" },
-    { id: "r3", name: "Tiefling", tone_tags: ["dark"], description: "" },
-    { id: "r4", name: "Dwarf", tone_tags: ["heroic"], description: "" },
+    { id: "r1", name: "Human", name_ru: "Человек", tone_tags: ["heroic"], theme: ["classic"], description: "" },
+    { id: "r2", name: "Elf", name_ru: "Эльф", tone_tags: ["wild"], theme: ["classic"], description: "" },
+    { id: "r3", name: "Tiefling", name_ru: "Тифлинг", tone_tags: ["dark"], theme: ["classic"], description: "" },
+    { id: "r4", name: "Dwarf", name_ru: "Дварф", tone_tags: ["heroic"], theme: ["classic"], description: "" },
   ],
   backgrounds: [
-    { id: "b1", name: "Acolyte", tone_tags: [], description: "" },
-    { id: "b2", name: "Criminal", tone_tags: [], description: "" },
-    { id: "b3", name: "Soldier", tone_tags: [], description: "" },
+    { id: "b1", name: "Acolyte", name_ru: "Послушник", tone_tags: [], description: "" },
+    { id: "b2", name: "Criminal", name_ru: "Преступник", tone_tags: [], description: "" },
+    { id: "b3", name: "Soldier", name_ru: "Солдат", tone_tags: [], description: "" },
   ],
   traits: [
     { id: "t-v1", type: "value", name: "Справедливость", tags: ["heroic", "religious"], description: null },

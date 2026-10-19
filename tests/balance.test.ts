@@ -13,6 +13,7 @@ const baseInput: GeneratorInput = {
   system: "dnd5e",
   level: 3,
   tone: "dark_fantasy",
+  theme: "classic",
   party_size: 4,
   world: "custom",
   constraints: {},
@@ -49,30 +50,21 @@ describe("validateRoles", () => {
   });
 
   it("invalid без танка", () => {
-    const chars = [
-      makeChar("healer", "Cleric"),
-      makeChar("dps", "Rogue"),
-    ];
+    const chars = [makeChar("healer", "Cleric"), makeChar("dps", "Rogue")];
     const result = validateRoles(chars);
     expect(result.valid).toBe(false);
     expect(result.missing).toContain("tank");
   });
 
   it("invalid без хилера", () => {
-    const chars = [
-      makeChar("tank", "Paladin"),
-      makeChar("dps", "Rogue"),
-    ];
+    const chars = [makeChar("tank", "Paladin"), makeChar("dps", "Rogue")];
     const result = validateRoles(chars);
     expect(result.valid).toBe(false);
     expect(result.missing).toContain("healer");
   });
 
   it("invalid без dps", () => {
-    const chars = [
-      makeChar("tank", "Paladin"),
-      makeChar("healer", "Cleric"),
-    ];
+    const chars = [makeChar("tank", "Paladin"), makeChar("healer", "Cleric")];
     const result = validateRoles(chars);
     expect(result.valid).toBe(false);
     expect(result.missing).toContain("dps");
@@ -89,18 +81,12 @@ describe("scoreSynergy", () => {
   });
 
   it("положительный для синергичной пары", () => {
-    const chars = [
-      makeChar("tank", "Paladin"),
-      makeChar("healer", "Cleric"),
-    ];
+    const chars = [makeChar("tank", "Paladin"), makeChar("healer", "Cleric")];
     expect(scoreSynergy(chars)).toBeGreaterThan(0);
   });
 
   it("растёт при большем числе синергий", () => {
-    const one = [
-      makeChar("tank", "Paladin"),
-      makeChar("healer", "Cleric"),
-    ];
+    const one = [makeChar("tank", "Paladin"), makeChar("healer", "Cleric")];
     const two = [
       makeChar("tank", "Paladin"),
       makeChar("healer", "Cleric"),

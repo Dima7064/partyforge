@@ -3,9 +3,9 @@ import { pickName, pickUniqueName } from "@/lib/generator/names";
 import { mulberry32 } from "@/lib/generator/random";
 import type { RaceRow } from "@/types/generator";
 
-const elf: RaceRow = { id: "r1", name: "Elf", tone_tags: [], description: "" };
-const dwarf: RaceRow = { id: "r2", name: "Dwarf", tone_tags: [], description: "" };
-const unknown: RaceRow = { id: "r3", name: "UnknownRace", tone_tags: [], description: "" };
+const elf: RaceRow = { id: "r1", name: "Elf", name_ru: "Эльф", tone_tags: [], theme: ["classic"], description: "" };
+const dwarf: RaceRow = { id: "r2", name: "Dwarf", name_ru: "Дварф", tone_tags: [], theme: ["classic"], description: "" };
+const unknown: RaceRow = { id: "r3", name: "UnknownRace", name_ru: "Неизвестная раса", tone_tags: [], theme: ["classic"], description: "" };
 
 describe("pickName", () => {
   it("возвращает имя из списка расы", () => {
@@ -54,7 +54,6 @@ describe("pickUniqueName", () => {
   it("добавляет суффикс, если все имена использованы", () => {
     const rng = mulberry32(1);
     const used = new Set<string>();
-    // 30 имён — больше, чем в списке эльфов (14)
     const names: string[] = [];
     for (let i = 0; i < 30; i++) {
       names.push(pickUniqueName(elf, rng, used));

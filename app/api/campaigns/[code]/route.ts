@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getCampaignByCode,
   deleteCampaignByCode,
-  regenerateCharacter,
+  updateCampaignSettings,
 } from "@/lib/db/campaigns";
-import { loadGeneratorData } from "@/lib/generator/data";
+import { getCurrentUser } from "@/lib/auth/currentUser";
 
 export async function GET(
   _req: NextRequest,
@@ -12,20 +12,15 @@ export async function GET(
 ) {
   try {
     const { code } = await params;
-    const campaign = await getCampaignByCode(code);
+    const user = await getCurrentUser();
+    const campaign = await getCampaignByCode(code, user?.id);
     if (!campaign) {
-      return NextResponse.json(
-        { error: "Кампания не найдена" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Кампания не найдена" }, { status: 404 });
     }
     return NextResponse.json({ data: campaign });
   } catch (e) {
     console.error(`GET /api/campaigns/[code] failed:`, e);
-    return NextResponse.json(
-      { error: "Не удалось загрузить кампанию" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Ошибка" }, { status: 500 });
   }
 }
 
@@ -35,35 +30,18 @@ export async function PATCH(
 ) {
   try {
     const { code } = await params;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     const body = await req.json();
-
-    if (body.action === "regenerate_character") {
-      const campaign = await getCampaignByCode(code);
-      if (!campaign) {
-        return NextResponse.json(
-          { error: "Кампания не найдена" },
-          { status: 404 },
-        );
-      }
-
-      const data = await loadGeneratorData();
-      const regenerated = await regenerateCharacter(
-        code,
-        Number(body.character_index),
-        data,
-        campaign.input,
-      );
-
-      return NextResponse.json({ data: regenerated });
-    }
-
-    return NextResponse.json({ error: "Неизвестное действие" }, { status: 400 });
+    await updateCampaignSettings(code, user.id, {
+      title: body.title,
+      status: body.status,
+    });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(`PATCH /api/campaigns/[code] failed:`, e);
-    return NextResponse.json(
-      { error: "Не удалось обновить кампанию" },
-      { status: 500 },
-    );
+    const msg = e instanceof Error ? e.message : "Ошибка";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
 
@@ -73,19 +51,14 @@ export async function DELETE(
 ) {
   try {
     const { code } = await params;
-    const deleted = await deleteCampaignByCode(code);
-    if (!deleted) {
-      return NextResponse.json(
-        { error: "Кампания не найдена" },
-        { status: 404 },
-      );
-    }
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    const deleted = await deleteCampaignByCode(code, user.id);
+    if (!deleted) return NextResponse.json({ error: "Не найдена" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(`DELETE /api/campaigns/[code] failed:`, e);
-    return NextResponse.json(
-      { error: "Не удалось удалить кампанию" },
-      { status: 500 },
-    );
+    const msg = e instanceof Error ? e.message : "Ошибка";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

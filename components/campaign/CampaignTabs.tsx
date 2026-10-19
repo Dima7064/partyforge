@@ -19,6 +19,13 @@ type TabId = (typeof TABS)[number]["id"];
 export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
   const [active, setActive] = useState<TabId>("party");
 
+  const isPlayer = campaign.viewer_role === "player";
+  const myIndex = campaign.viewer_character_index;
+  const visibleCharacters =
+    isPlayer && myIndex !== undefined
+      ? [campaign.characters[myIndex]]
+      : campaign.characters;
+
   return (
     <div className="space-y-6">
       <div className="flex gap-1 flex-wrap border-b border-forge-border">
@@ -38,10 +45,17 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
       </div>
 
       {active === "party" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {campaign.characters.map((c, i) => (
-            <CharacterCard key={i} character={c} />
-          ))}
+        <div className="space-y-3">
+          {isPlayer && (
+            <p className="text-forge-muted text-sm">
+              Ты видишь только своего персонажа. Секреты других скрыты.
+            </p>
+          )}
+          <div className="grid md:grid-cols-2 gap-4">
+            {visibleCharacters.map((c, i) => (
+              <CharacterCard key={i} character={c} />
+            ))}
+          </div>
         </div>
       )}
 

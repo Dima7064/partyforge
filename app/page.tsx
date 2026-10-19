@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth/currentUser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
       <div className="max-w-2xl w-full text-center space-y-8">
@@ -14,30 +17,32 @@ export default function Home() {
             PartyForge
           </h1>
           <p className="text-forge-muted text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
-            Собирай связанные партии персонажей, локации, ситуации и сюжетные крючки
-            для настольных ролевых игр.
+            Собирай связанные партии персонажей, локации, ситуации и сюжетные
+            крючки для настольных ролевых игр.
           </p>
         </div>
 
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/generate">
-            <Button size="lg">Сгенерировать кампанию</Button>
-          </Link>
-          <Link href="/catalog">
-            <Button size="lg" variant="outline">Каталог</Button>
-          </Link>
-          <Link href="/design">
-            <Button size="lg" variant="ghost">Дизайн-система</Button>
-          </Link>
+          {user ? (
+            <>
+              <Link href="/dashboard">
+                <Button size="lg">Мой кабинет</Button>
+              </Link>
+              <Link href="/generate">
+                <Button size="lg" variant="outline">Создать кампанию</Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/register">
+                <Button size="lg">Зарегистрироваться</Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline">Войти</Button>
+              </Link>
+            </>
+          )}
         </div>
-
-        <Card className="max-w-md mx-auto text-left">
-          <CardContent>
-            <p className="text-sm text-forge-muted">
-              Версия 0.2 — генерация работает end-to-end. Дальше: экспорт в PDF и JSON.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </main>
   );
