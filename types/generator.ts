@@ -10,16 +10,20 @@ export type Tone =
   | "wild"
   | "religious";
 
-export type CharacterRole = "tank" | "healer" | "dps" | "face" | "control" | "support";
+export type Theme = "classic" | "skyrim";
+
+export type CharacterRole =
+  | "tank"
+  | "healer"
+  | "dps"
+  | "face"
+  | "control"
+  | "support";
 
 export type RelationshipType = "trust" | "debt" | "love" | "conflict" | "secret";
-
 export type HookType = "personal" | "social" | "exploration" | "combat";
-
 export type ConnectionType = "born" | "lost" | "served" | "dreams";
-
 export type FactionAttitude = "ally" | "enemy" | "neutral";
-
 export type NpcRole = "ally" | "enemy" | "neutral";
 
 export interface Constraints {
@@ -30,27 +34,21 @@ export interface Constraints {
 }
 
 export interface GeneratorInput {
-  system: string; // "dnd5e"
+  system: string;
   level: number;
   tone: Tone;
+  theme: Theme;
   party_size: number;
-  world: string; // "custom" | название готового мира
+  world: string;
   constraints: Constraints;
   duration: "one_shot" | "mini_campaign" | "long_campaign";
 }
 
 // ============================================
-// Характеристики D&D
+// Характеристики
 // ============================================
 
-export type Ability =
-  | "str"
-  | "dex"
-  | "con"
-  | "int"
-  | "wis"
-  | "cha";
-
+export type Ability = "str" | "dex" | "con" | "int" | "wis" | "cha";
 export type Abilities = Record<Ability, number>;
 
 // ============================================
@@ -65,7 +63,7 @@ export interface Personality {
 }
 
 export interface Character {
-  id?: string; // появляется после сохранения в БД
+  id?: string;
   name: string;
   class_name: string;
   race_name: string;
@@ -76,14 +74,15 @@ export interface Character {
   personality: Personality;
   backstory: string;
   secret_text: string;
+  image_url?: string;
 }
 
 // ============================================
-// Связи между персонажами
+// Связи
 // ============================================
 
 export interface Relationship {
-  source_character_index: number; // индекс в массиве characters
+  source_character_index: number;
   target_character_index: number;
   type: RelationshipType;
   description: string;
@@ -95,8 +94,9 @@ export interface Relationship {
 
 export interface Location {
   name: string;
-  type: string; // "city" | "temple" | "forest" | "ruins"
+  type: string;
   description: string;
+  image_url?: string;
 }
 
 export interface CharacterLocation {
@@ -118,6 +118,7 @@ export interface Npc {
   description: string;
   location_index?: number;
   faction_index?: number;
+  image_url?: string;
 }
 
 // ============================================
@@ -128,11 +129,11 @@ export interface Hook {
   title: string;
   description: string;
   type: HookType;
-  character_index?: number; // центр крючка
+  character_index?: number;
 }
 
 // ============================================
-// Кампания (результат генерации)
+// Кампания
 // ============================================
 
 export interface Campaign {
@@ -148,37 +149,33 @@ export interface Campaign {
 }
 
 // ============================================
-// Результат с share-кодом (после сохранения в БД)
-// ============================================
-
-export interface SavedCampaign {
-  share_code: string;
-  campaign: Campaign;
-}
-
-// ============================================
-// Каталог (данные из БД для генератора)
+// Каталог
 // ============================================
 
 export interface ClassRow {
   id: string;
   name: string;
+  name_ru: string;
   role: CharacterRole;
   ability_priorities: Ability[];
   tone_tags: string[];
+  theme: string[];
   description: string;
 }
 
 export interface RaceRow {
   id: string;
   name: string;
+  name_ru: string;
   tone_tags: string[];
+  theme: string[];
   description: string;
 }
 
 export interface BackgroundRow {
   id: string;
   name: string;
+  name_ru: string;
   tone_tags: string[];
   description: string;
 }
@@ -229,12 +226,23 @@ export interface GeneratorData {
 export type Rng = () => number;
 
 // ============================================
-// Сохранённая кампания (из БД)
+// Сохранённая кампания
 // ============================================
+
+export interface CampaignMember {
+  user_id: string;
+  username: string;
+  role: "master" | "player";
+  character_index?: number;
+  character_id?: string;
+}
 
 export interface SavedCampaignData {
   id: string;
   share_code: string;
+  user_id: string | null;
+  theme: Theme;
+  status: "draft" | "active" | "finished";
   input: GeneratorInput;
   characters: Character[];
   relationships: Relationship[];
@@ -244,4 +252,39 @@ export interface SavedCampaignData {
   npcs: Npc[];
   situation: string;
   hooks: Hook[];
+  members: CampaignMember[];
+  viewer_role: "master" | "player" | "none";
+  viewer_character_index?: number;
+}
+
+// ============================================
+// Профиль и достижения
+// ============================================
+
+export interface Profile {
+  id: string;
+  username: string;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface UserAchievement {
+  code: string;
+  name_ru: string;
+  description_ru: string;
+  icon: string;
+  unlocked_at: string;
+}
+
+export interface ProfileStats {
+  campaigns_created: number;
+  campaigns_joined: number;
+  total_characters: number;
+  favorite_class: string | null;
+  favorite_class_ru: string | null;
+  favorite_race: string | null;
+  favorite_race_ru: string | null;
+  class_distribution: { name: string; count: number }[];
+  race_distribution: { name: string; count: number }[];
+  campaigns_by_month: { month: string; count: number }[];
 }

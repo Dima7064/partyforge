@@ -7,25 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import type { Tone } from "@/types/generator";
-
-const TONES: { value: Tone; label: string }[] = [
-  { value: "dark_fantasy", label: "Тёмное фэнтези" },
-  { value: "heroic", label: "Героика" },
-  { value: "comedic", label: "Комедия" },
-  { value: "political", label: "Политика" },
-  { value: "wild", label: "Дикость" },
-  { value: "religious", label: "Религия" },
-];
+import type { Theme } from "@/types/generator";
 
 export default function GeneratePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [title, setTitle] = useState("");
   const [level, setLevel] = useState(3);
-  const [tone, setTone] = useState<Tone>("dark_fantasy");
   const [partySize, setPartySize] = useState(4);
+  const [theme, setTheme] = useState<Theme>("classic");
   const [duration, setDuration] = useState("mini_campaign");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -40,19 +32,19 @@ export default function GeneratePage() {
         body: JSON.stringify({
           system: "dnd5e",
           level,
-          tone,
+          tone: "dark_fantasy",
+          theme,
           party_size: partySize,
           world: "custom",
           constraints: {},
           duration,
+          title: title.trim() || undefined,
         }),
       });
-
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error ?? "Ошибка");
       }
-
       const { share_code } = await res.json();
       router.push(`/c/${share_code}`);
     } catch (err) {
@@ -67,7 +59,7 @@ export default function GeneratePage() {
         Создать кампанию
       </h1>
       <p className="text-forge-muted mb-8">
-        Заполни параметры — и мы сгенерируем партию, мир и сюжетные крючки.
+        Тёмное фэнтези. Выбери тему, уровень и размер партии.
       </p>
 
       <Card>
@@ -76,6 +68,28 @@ export default function GeneratePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <Label htmlFor="title">Название (опционально)</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Проклятие Тенебры"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="theme">Тема</Label>
+              <Select
+                id="theme"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as Theme)}
+              >
+                <option value="classic">Классика D&amp;D</option>
+                <option value="skyrim">Скайрим</option>
+              </Select>
+            </div>
+
             <div>
               <Label htmlFor="level">Уровень</Label>
               <Input
@@ -86,21 +100,6 @@ export default function GeneratePage() {
                 value={level}
                 onChange={(e) => setLevel(Number(e.target.value))}
               />
-            </div>
-
-            <div>
-              <Label htmlFor="tone">Тон</Label>
-              <Select
-                id="tone"
-                value={tone}
-                onChange={(e) => setTone(e.target.value as Tone)}
-              >
-                {TONES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </Select>
             </div>
 
             <div>
@@ -128,9 +127,7 @@ export default function GeneratePage() {
               </Select>
             </div>
 
-            {error && (
-              <p className="text-forge-ember text-sm">{error}</p>
-            )}
+            {error && <p className="text-forge-ember text-sm">{error}</p>}
 
             <Button type="submit" size="lg" disabled={loading} className="w-full">
               {loading ? "Генерируем..." : "Сгенерировать"}

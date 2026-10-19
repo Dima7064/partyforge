@@ -6,6 +6,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Character } from "@/types/generator";
+import {
+  backgroundNameRu,
+  classNameRu,
+  raceNameRu,
+} from "@/data/localization";
 
 const ROLE_LABEL: Record<string, string> = {
   tank: "Танк",
@@ -36,8 +41,9 @@ export function CharacterCard({ character }: { character: Character }) {
           </Badge>
         </CardTitle>
         <p className="text-sm text-forge-muted">
-          {character.race_name} · {character.class_name} · {character.background_name} · Ур.{" "}
-          {character.level}
+          {raceNameRu(character.race_name)} ·{" "}
+          {classNameRu(character.class_name)} ·{" "}
+          {backgroundNameRu(character.background_name)} · Ур. {character.level}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -47,7 +53,9 @@ export function CharacterCard({ character }: { character: Character }) {
               key={key}
               className="bg-forge-bg border border-forge-border rounded p-1.5 text-center"
             >
-              <div className="text-[10px] text-forge-muted">{ABILITY_LABEL[key] ?? key}</div>
+              <div className="text-[10px] text-forge-muted">
+                {ABILITY_LABEL[key] ?? key}
+              </div>
               <div className="text-lg font-bold text-forge-gold-light">{value}</div>
             </div>
           ))}

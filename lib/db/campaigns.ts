@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import type {
   Campaign,
+  CampaignMember,
   Character,
   CharacterLocation,
   Faction,
@@ -10,14 +11,18 @@ import type {
   Npc,
   Relationship,
   SavedCampaignData,
+  Theme,
 } from "@/types/generator";
 import { generateShareCode } from "@/lib/campaigns/shareCode";
+import { unlockAchievement } from "@/lib/db/achievements";
 
 const MAX_CODE_ATTEMPTS = 5;
 
 export async function saveCampaign(
   input: GeneratorInput,
   campaign: Campaign,
+  userId: string,
+  title?: string,
 ): Promise<{ share_code: string; id: string }> {
   const supabase = createServerClient();
 
@@ -27,16 +32,16 @@ export async function saveCampaign(
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
     share_code = generateShareCode();
-
     const { data, error } = await supabase
       .from("campaigns")
       .insert({
         share_code,
-        user_id: null,
-        title: `Кампания ${share_code}`,
+        user_id: userId,
+        title: title || `Кампания ${share_code}`,
         system: input.system,
         level: input.level,
         tone: input.tone,
+        theme: input.theme,
         party_size: input.party_size,
         world: input.world,
         constraints: input.constraints,
@@ -45,7 +50,6 @@ export async function saveCampaign(
       })
       .select("id, share_code")
       .single();
-
     if (error) {
       if (error.code === "23505") continue;
       throw error;
@@ -54,12 +58,16 @@ export async function saveCampaign(
     inserted = true;
     break;
   }
+  if (!inserted) throw new Error("Не удалось создать share_code");
 
-  if (!inserted) {
-    throw new Error("Не удалось создать share_code — попробуй ещё раз");
-  }
+  // Master
+  await supabase.from("campaign_members").insert({
+    campaign_id: campaignId,
+    user_id: userId,
+    role: "master",
+  });
 
-  // characters
+  // Characters
   const characterRows = campaign.characters.map((c) => ({
     campaign_id: campaignId,
     name: c.name,
@@ -73,16 +81,14 @@ export async function saveCampaign(
     backstory: c.backstory,
     secret_text: c.secret_text,
   }));
-
   const { data: insertedChars, error: charsErr } = await supabase
     .from("characters")
     .insert(characterRows)
     .select("id");
-
   if (charsErr) throw charsErr;
   const charIds = (insertedChars ?? []).map((r) => r.id);
 
-  // relationships
+  // Relationships
   if (campaign.relationships.length > 0) {
     const relRows = campaign.relationships.map((r) => ({
       campaign_id: campaignId,
@@ -95,7 +101,7 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // locations
+  // Locations
   const locationRows = campaign.locations.map((l) => ({
     campaign_id: campaignId,
     name: l.name,
@@ -109,20 +115,18 @@ export async function saveCampaign(
   if (locErr) throw locErr;
   const locIds = (insertedLocs ?? []).map((r) => r.id);
 
-  // character_locations
   if (campaign.character_locations.length > 0) {
     const clRows = campaign.character_locations.map((cl) => ({
+      campaign_id: campaignId,
       character_id: charIds[cl.character_index],
       location_id: locIds[cl.location_index],
       connection_type: cl.connection_type,
     }));
-    const { error } = await supabase
-      .from("character_locations")
-      .insert(clRows);
+    const { error } = await supabase.from("character_locations").insert(clRows);
     if (error) throw error;
   }
 
-  // factions
+  // Factions
   const factionRows = campaign.factions.map((f) => ({
     campaign_id: campaignId,
     name: f.name,
@@ -137,43 +141,47 @@ export async function saveCampaign(
   if (factErr) throw factErr;
   const factIds = (insertedFacts ?? []).map((r) => r.id);
 
-  // npcs
   if (campaign.npcs.length > 0) {
     const npcRows = campaign.npcs.map((n) => ({
       campaign_id: campaignId,
       name: n.name,
       role: n.role,
       description: n.description,
-      location_id:
-        n.location_index !== undefined ? locIds[n.location_index] : null,
-      faction_id:
-        n.faction_index !== undefined ? factIds[n.faction_index] : null,
+      location_id: n.location_index !== undefined ? locIds[n.location_index] : null,
+      faction_id: n.faction_index !== undefined ? factIds[n.faction_index] : null,
     }));
     const { error } = await supabase.from("npcs").insert(npcRows);
     if (error) throw error;
   }
 
-  // hooks
   if (campaign.hooks.length > 0) {
     const hookRows = campaign.hooks.map((h) => ({
       campaign_id: campaignId,
       title: h.title,
       description: h.description,
       type: h.type,
-      character_id:
-        h.character_index !== undefined
-          ? charIds[h.character_index]
-          : null,
+      character_id: h.character_index !== undefined ? charIds[h.character_index] : null,
     }));
     const { error } = await supabase.from("hooks").insert(hookRows);
     if (error) throw error;
   }
+
+  // Достижения
+  const { count } = await supabase
+    .from("campaign_members")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("role", "master");
+  if ((count ?? 0) >= 1) await unlockAchievement(userId, "first_campaign");
+  if ((count ?? 0) >= 10) await unlockAchievement(userId, "ten_campaigns");
+  if (input.theme === "skyrim") await unlockAchievement(userId, "skyrim_master");
 
   return { share_code, id: campaignId };
 }
 
 export async function getCampaignByCode(
   code: string,
+  viewerUserId?: string,
 ): Promise<SavedCampaignData | null> {
   const supabase = createServerClient();
 
@@ -182,52 +190,25 @@ export async function getCampaignByCode(
     .select("*")
     .eq("share_code", code)
     .maybeSingle();
-
   if (error) throw error;
   if (!campaign) return null;
 
   const campaignId = campaign.id;
 
-  const [
-    charsRes,
-    relsRes,
-    locsRes,
-    clRes,
-    factsRes,
-    npcsRes,
-    hooksRes,
-  ] = await Promise.all([
-    supabase
-      .from("characters")
-      .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at"),
-    supabase
-      .from("relationships")
-      .select("*")
-      .eq("campaign_id", campaignId),
-    supabase
-      .from("locations")
-      .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at"),
-    supabase.from("character_locations").select("*"),
-    supabase
-      .from("factions")
-      .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at"),
-    supabase
-      .from("npcs")
-      .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at"),
-    supabase
-      .from("hooks")
-      .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at"),
-  ]);
+  const [charsRes, relsRes, locsRes, clRes, factsRes, npcsRes, hooksRes, membersRes] =
+    await Promise.all([
+      supabase.from("characters").select("*").eq("campaign_id", campaignId).order("created_at"),
+      supabase.from("relationships").select("*").eq("campaign_id", campaignId),
+      supabase.from("locations").select("*").eq("campaign_id", campaignId).order("created_at"),
+      supabase.from("character_locations").select("*").eq("campaign_id", campaignId),
+      supabase.from("factions").select("*").eq("campaign_id", campaignId).order("created_at"),
+      supabase.from("npcs").select("*").eq("campaign_id", campaignId).order("created_at"),
+      supabase.from("hooks").select("*").eq("campaign_id", campaignId).order("created_at"),
+      supabase
+        .from("campaign_members")
+        .select("user_id, role, character_id, profiles(username)")
+        .eq("campaign_id", campaignId),
+    ]);
 
   if (charsRes.error) throw charsRes.error;
   if (relsRes.error) throw relsRes.error;
@@ -236,6 +217,7 @@ export async function getCampaignByCode(
   if (factsRes.error) throw factsRes.error;
   if (npcsRes.error) throw npcsRes.error;
   if (hooksRes.error) throw hooksRes.error;
+  if (membersRes.error) throw membersRes.error;
 
   const chars = charsRes.data ?? [];
   const locs = locsRes.data ?? [];
@@ -243,25 +225,37 @@ export async function getCampaignByCode(
 
   const charIdToIndex = new Map<string, number>();
   chars.forEach((c, i) => charIdToIndex.set(c.id, i));
-
   const locIdToIndex = new Map<string, number>();
   locs.forEach((l, i) => locIdToIndex.set(l.id, i));
-
   const factIdToIndex = new Map<string, number>();
   facts.forEach((f, i) => factIdToIndex.set(f.id, i));
+
+  const viewerRole: "master" | "player" | "none" = !viewerUserId
+    ? "none"
+    : (membersRes.data ?? []).some((m) => m.user_id === viewerUserId && m.role === "master")
+    ? "master"
+    : (membersRes.data ?? []).some((m) => m.user_id === viewerUserId && m.role === "player")
+    ? "player"
+    : "none";
+
+  const viewerMember = viewerUserId
+    ? (membersRes.data ?? []).find((m) => m.user_id === viewerUserId)
+    : undefined;
+  const viewerCharacterIndex =
+    viewerMember?.character_id ? charIdToIndex.get(viewerMember.character_id) : undefined;
 
   const characters: Character[] = chars.map((c) => ({
     id: c.id,
     name: c.name,
-    class_name: c.class_name ?? "",
-    race_name: c.race_name ?? "",
-    background_name: c.background_name ?? "",
+    class_name: c.class_name,
+    race_name: c.race_name,
+    background_name: c.background_name,
     level: c.level,
     role: c.role,
     abilities: c.abilities,
     personality: c.personality,
     backstory: c.backstory,
-    secret_text: c.secret_text ?? "",
+    secret_text: c.secret_text,
   }));
 
   const relationships: Relationship[] = (relsRes.data ?? []).map((r) => ({
@@ -277,16 +271,11 @@ export async function getCampaignByCode(
     description: l.description,
   }));
 
-  const relevantCharIds = new Set(chars.map((c) => c.id));
-  const relevantLocIds = new Set(locs.map((l) => l.id));
-
-  const character_locations: CharacterLocation[] = (clRes.data ?? [])
-    .filter((cl) => relevantCharIds.has(cl.character_id) && relevantLocIds.has(cl.location_id))
-    .map((cl) => ({
-      character_index: charIdToIndex.get(cl.character_id) ?? 0,
-      location_index: locIdToIndex.get(cl.location_id) ?? 0,
-      connection_type: cl.connection_type,
-    }));
+  const character_locations: CharacterLocation[] = (clRes.data ?? []).map((cl) => ({
+    character_index: charIdToIndex.get(cl.character_id) ?? 0,
+    location_index: locIdToIndex.get(cl.location_id) ?? 0,
+    connection_type: cl.connection_type,
+  }));
 
   const factions: Faction[] = facts.map((f) => ({
     name: f.name,
@@ -319,19 +308,42 @@ export async function getCampaignByCode(
         : undefined,
   }));
 
+  const members: CampaignMember[] = (membersRes.data ?? []).map((m) => {
+    const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+    return {
+      user_id: m.user_id,
+      username: p?.username ?? "",
+      role: m.role,
+      character_id: m.character_id ?? undefined,
+      character_index: m.character_id ? charIdToIndex.get(m.character_id) : undefined,
+    };
+  });
+
+  // Фильтрация для игрока: только его персонаж и его секрет
+  const filteredCharacters =
+    viewerRole === "player" && viewerCharacterIndex !== undefined
+      ? characters.map((c, i) =>
+          i === viewerCharacterIndex ? c : { ...c, secret_text: "" },
+        )
+      : characters;
+
   return {
     id: campaignId,
     share_code: campaign.share_code,
+    user_id: campaign.user_id,
+    theme: (campaign.theme as Theme) ?? "classic",
+    status: campaign.status ?? "active",
     input: {
       system: campaign.system,
       level: campaign.level,
       tone: campaign.tone,
+      theme: (campaign.theme as Theme) ?? "classic",
       party_size: campaign.party_size,
       world: campaign.world,
       constraints: campaign.constraints ?? {},
       duration: campaign.duration,
     },
-    characters,
+    characters: filteredCharacters,
     relationships,
     locations,
     character_locations,
@@ -339,84 +351,95 @@ export async function getCampaignByCode(
     npcs,
     situation: campaign.situation ?? "",
     hooks,
+    members,
+    viewer_role: viewerRole,
+    viewer_character_index: viewerCharacterIndex,
   };
 }
 
-export async function deleteCampaignByCode(code: string): Promise<boolean> {
+export async function deleteCampaignByCode(
+  code: string,
+  userId: string,
+): Promise<boolean> {
   const supabase = createServerClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", code)
+    .maybeSingle();
+  if (!data) return false;
+  if (data.user_id !== userId) throw new Error("Нет доступа");
+  const { error } = await supabase.from("campaigns").delete().eq("id", data.id);
+  if (error) throw error;
+  return true;
+}
+
+export async function updateCampaignSettings(
+  code: string,
+  userId: string,
+  updates: { title?: string; status?: "draft" | "active" | "finished" },
+): Promise<void> {
+  const supabase = createServerClient();
+  const { data } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", code)
+    .maybeSingle();
+  if (!data) throw new Error("Кампания не найдена");
+  if (data.user_id !== userId) throw new Error("Нет доступа");
+  const { error } = await supabase
+    .from("campaigns")
+    .update(updates)
+    .eq("id", data.id);
+  if (error) throw error;
+}
+
+export async function joinCampaign(
+  code: string,
+  userId: string,
+  characterIndex: number,
+): Promise<{ ok: true }> {
+  const supabase = createServerClient();
+  const { data: campaign } = await supabase
     .from("campaigns")
     .select("id")
     .eq("share_code", code)
     .maybeSingle();
-  if (error) throw error;
-  if (!data) return false;
-
-  const { error: delErr } = await supabase
-    .from("campaigns")
-    .delete()
-    .eq("id", data.id);
-  if (delErr) throw delErr;
-  return true;
-}
-
-export async function regenerateCharacter(
-  code: string,
-  characterIndex: number,
-  data: import("@/types/generator").GeneratorData,
-  input: import("@/types/generator").GeneratorInput,
-): Promise<import("@/types/generator").Character> {
-  const { generateCharacter } = await import("@/lib/generator/character");
-  const { mulberry32 } = await import("@/lib/generator/random");
-
-  const current = await getCampaignByCode(code);
-  if (!current) throw new Error("Кампания не найдена");
-  if (characterIndex < 0 || characterIndex >= current.characters.length) {
-    throw new Error("Неверный индекс персонажа");
-  }
-
-  const rng = mulberry32(Math.floor(Math.random() * 2 ** 32));
-  const existingClassIds = new Set<string>();
-  const existingNames = new Set<string>(
-    current.characters
-      .filter((_, i) => i !== characterIndex)
-      .map((c) => c.name),
-  );
-
-  const newChar = generateCharacter(input, data, {
-    rng,
-    existingClassIds,
-    existingNames,
-  });
-
-  const supabase = createServerClient();
+  if (!campaign) throw new Error("Кампания не найдена");
 
   const { data: existing } = await supabase
+    .from("campaign_members")
+    .select("id")
+    .eq("campaign_id", campaign.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (existing) throw new Error("Уже участник");
+
+  const { data: chars } = await supabase
     .from("characters")
     .select("id")
-    .eq("campaign_id", current.id)
-    .order("created_at")
-    .range(characterIndex, characterIndex)
-    .single();
+    .eq("campaign_id", campaign.id)
+    .order("created_at");
+  if (!chars || characterIndex < 0 || characterIndex >= chars.length) {
+    throw new Error("Неверный персонаж");
+  }
+  const characterId = chars[characterIndex].id;
 
-  if (!existing) throw new Error("Персонаж не найден в БД");
+  const { error } = await supabase.from("campaign_members").insert({
+    campaign_id: campaign.id,
+    user_id: userId,
+    role: "player",
+    character_id: characterId,
+  });
+  if (error) throw error;
 
-  const { error: updErr } = await supabase
-    .from("characters")
-    .update({
-      name: newChar.name,
-      class_name: newChar.class_name,
-      race_name: newChar.race_name,
-      background_name: newChar.background_name,
-      role: newChar.role,
-      abilities: newChar.abilities,
-      personality: newChar.personality,
-      backstory: newChar.backstory,
-      secret_text: newChar.secret_text,
-    })
-    .eq("id", existing.id);
+  const { count } = await supabase
+    .from("campaign_members")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("role", "player");
+  if ((count ?? 0) >= 1) await unlockAchievement(userId, "first_join");
+  if ((count ?? 0) >= 5) await unlockAchievement(userId, "five_joins");
 
-  if (updErr) throw updErr;
-
-  return { ...newChar, id: existing.id };
+  return { ok: true };
 }

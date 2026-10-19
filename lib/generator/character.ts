@@ -13,6 +13,7 @@ import { pickUniqueName } from "./names";
 import { generatePersonality } from "./personality";
 import { generateBackstory } from "./backstory";
 import { pickSecret } from "./secret";
+import { portraitForCharacter } from "./images";
 
 function buildToneWeightMap(data: GeneratorData, tone: string) {
   const map = new Map<string, number>();
@@ -103,5 +104,8 @@ export function generateCharacter(
 
   const backstory = generateBackstory(partial, input.tone, ctx.rng);
 
-  return { ...partial, backstory };
+  const finalChar: Character = { ...partial, backstory };
+  finalChar.image_url = portraitForCharacter(finalChar);
+
+  return finalChar;
 }

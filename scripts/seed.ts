@@ -1,5 +1,6 @@
-import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { createClient } from "@supabase/supabase-js";
 import { classes } from "../data/classes";
 import { races } from "../data/races";
@@ -8,60 +9,80 @@ import { traits } from "../data/traits";
 import { secrets } from "../data/secrets";
 import { hookTemplates } from "../data/hookTemplates";
 import { toneWeights } from "../data/toneWeights";
+import { achievements } from "../data/achievements";
+import {
+  CLASS_NAMES_RU,
+  RACE_NAMES_RU,
+  BACKGROUND_NAMES_RU,
+} from "../data/localization";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-// Для таблиц с уникальным именем используем upsert (вставить или обновить)
 async function seedClasses() {
-  const { error } = await supabase.from("classes").upsert(classes, {
-    onConflict: "name",
-  });
+  await supabase.from("classes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  
+  const rows = classes.map((c) => ({
+    ...c,
+    name_ru: CLASS_NAMES_RU[c.name] ?? c.name,
+    theme: ["classic"],
+  }));
+  const { error } = await supabase.from("classes").insert(rows);
   if (error) throw error;
-  console.log(`✓ classes: ${classes.length}`);
+  console.log(`✓ classes: ${rows.length}`);
 }
 
 async function seedRaces() {
-  const { error } = await supabase.from("races").upsert(races, {
-    onConflict: "name",
-  });
+  await supabase.from("races").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+  const rows = races.map((r) => ({
+    ...r,
+    name_ru: RACE_NAMES_RU[r.name] ?? r.name,
+    theme: ["classic"],
+  }));
+  const { error } = await supabase.from("races").insert(rows);
   if (error) throw error;
-  console.log(`✓ races: ${races.length}`);
+  console.log(`✓ races: ${rows.length}`);
 }
 
 async function seedBackgrounds() {
-  const { error } = await supabase.from("backgrounds").upsert(backgrounds, {
-    onConflict: "name",
-  });
+  await supabase.from("backgrounds").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+  const rows = backgrounds.map((b) => ({
+    ...b,
+    name_ru: BACKGROUND_NAMES_RU[b.name] ?? b.name,
+  }));
+  const { error } = await supabase.from("backgrounds").insert(rows);
   if (error) throw error;
-  console.log(`✓ backgrounds: ${backgrounds.length}`);
+  console.log(`✓ backgrounds: ${rows.length}`);
 }
 
-// Для таблиц без уникальных ключей (кроме id) используем очистку и вставку
 async function seedTraits() {
-  await supabase.from("traits").delete().neq("type", "none");
+  await supabase.from("traits").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   const { error } = await supabase.from("traits").insert(traits);
   if (error) throw error;
   console.log(`✓ traits: ${traits.length}`);
 }
 
 async function seedSecrets() {
-  await supabase.from("secrets").delete().neq("text", "none");
+  await supabase.from("secrets").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   const { error } = await supabase.from("secrets").insert(secrets);
   if (error) throw error;
   console.log(`✓ secrets: ${secrets.length}`);
 }
 
 async function seedHookTemplates() {
-  await supabase.from("hook_templates").delete().neq("type", "none");
+  await supabase.from("hook_templates").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   const { error } = await supabase.from("hook_templates").insert(hookTemplates);
   if (error) throw error;
   console.log(`✓ hook_templates: ${hookTemplates.length}`);
 }
 
 async function seedToneWeights() {
+  await supabase.from("tone_weights").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
   const { data: classRows } = await supabase.from("classes").select("id, name");
   const { data: raceRows } = await supabase.from("races").select("id, name");
   if (!classRows || !raceRows) throw new Error("Не удалось загрузить каталог");
@@ -85,11 +106,23 @@ async function seedToneWeights() {
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
 
-  const { error } = await supabase.from("tone_weights").upsert(rows, {
-    onConflict: "tone,entity_type,entity_id",
-  });
+  const { error } = await supabase.from("tone_weights").insert(rows);
   if (error) throw error;
   console.log(`✓ tone_weights: ${rows.length}`);
+}
+
+async function seedAchievements() {
+  const rows = achievements.map((a) => ({
+    code: a.code,
+    name_ru: a.name_ru,
+    description_ru: a.description_ru,
+    icon: a.icon,
+  }));
+  const { error } = await supabase
+    .from("achievements")
+    .upsert(rows, { onConflict: "code" });
+  if (error) throw error;
+  console.log(`✓ achievements: ${rows.length}`);
 }
 
 async function main() {
@@ -101,7 +134,8 @@ async function main() {
   await seedSecrets();
   await seedHookTemplates();
   await seedToneWeights();
-  console.log("Seed успешно завершён!");
+  await seedAchievements();
+  console.log("Seed завершён.");
 }
 
 main().catch((e) => {

@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CampaignTabs } from "@/components/campaign/CampaignTabs";
 import { getCampaignByCode } from "@/lib/db/campaigns";
+import { getCurrentUser } from "@/lib/auth/currentUser";
+
+const THEME_LABEL: Record<string, string> = {
+  classic: "Классика D&D",
+  skyrim: "Скайрим",
+};
 
 export default async function CampaignPage({
   params,
@@ -11,9 +17,11 @@ export default async function CampaignPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const campaign = await getCampaignByCode(code);
+  const user = await getCurrentUser();
+  const campaign = await getCampaignByCode(code, user?.id);
 
   if (!campaign) notFound();
+  if (campaign.viewer_role === "none") redirect(`/join/${code}`);
 
   return (
     <main className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
@@ -22,22 +30,23 @@ export default async function CampaignPage({
           <div className="text-forge-muted text-sm uppercase tracking-[0.2em] mb-1">
             Кампания
           </div>
-          <h1 className="text-4xl font-bold text-forge-gold-light">
-            {campaign.input.tone === "dark_fantasy" && "Тёмное фэнтези"}
-            {campaign.input.tone === "heroic" && "Героика"}
-            {campaign.input.tone === "comedic" && "Комедия"}
-            {campaign.input.tone === "political" && "Политика"}
-            {campaign.input.tone === "wild" && "Дикость"}
-            {campaign.input.tone === "religious" && "Религия"}
-            {" · "}
-            Ур. {campaign.input.level} · {campaign.characters.length} героев
+          <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light">
+            {THEME_LABEL[campaign.theme] ?? campaign.theme} · Ур.{" "}
+            {campaign.input.level} · {campaign.characters.length} героев
           </h1>
           <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <span className="text-forge-muted text-sm">Код:</span>
             <Badge variant="gold">{campaign.share_code}</Badge>
-            <Link href="/">
-              <Button variant="ghost" size="sm">На главную</Button>
+            <Badge variant="muted">
+              {campaign.viewer_role === "master" ? "Ты — мастер" : "Ты — игрок"}
+            </Badge>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm">На дашборд</Button>
             </Link>
+            {campaign.viewer_role === "master" && (
+              <Link href={`/c/${code}/settings`}>
+                <Button variant="ghost" size="sm">Настройки</Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
