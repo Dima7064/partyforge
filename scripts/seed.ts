@@ -22,39 +22,32 @@ const supabase = createClient(
 );
 
 async function seedClasses() {
-  await supabase.from("classes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  
   const rows = classes.map((c) => ({
     ...c,
     name_ru: CLASS_NAMES_RU[c.name] ?? c.name,
-    theme: ["classic"],
   }));
-  const { error } = await supabase.from("classes").insert(rows);
+  // Используем upsert по name, чтобы не ломать ссылки у существующих персонажей
+  const { error } = await supabase.from("classes").upsert(rows, { onConflict: "name" });
   if (error) throw error;
   console.log(`✓ classes: ${rows.length}`);
 }
 
 async function seedRaces() {
-  await supabase.from("races").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
   const rows = races.map((r) => ({
     ...r,
     name_ru: RACE_NAMES_RU[r.name] ?? r.name,
-    theme: ["classic"],
   }));
-  const { error } = await supabase.from("races").insert(rows);
+  const { error } = await supabase.from("races").upsert(rows, { onConflict: "name" });
   if (error) throw error;
   console.log(`✓ races: ${rows.length}`);
 }
 
 async function seedBackgrounds() {
-  await supabase.from("backgrounds").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
   const rows = backgrounds.map((b) => ({
     ...b,
     name_ru: BACKGROUND_NAMES_RU[b.name] ?? b.name,
   }));
-  const { error } = await supabase.from("backgrounds").insert(rows);
+  const { error } = await supabase.from("backgrounds").upsert(rows, { onConflict: "name" });
   if (error) throw error;
   console.log(`✓ backgrounds: ${rows.length}`);
 }
@@ -67,6 +60,8 @@ async function seedTraits() {
 }
 
 async function seedSecrets() {
+  // Внимание: удаление секретов может конфликтовать с персонажами, у которых есть secret_id.
+  // В нашей новой схеме мы используем secret_text, поэтому это безопасно.
   await supabase.from("secrets").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   const { error } = await supabase.from("secrets").insert(secrets);
   if (error) throw error;

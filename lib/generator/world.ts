@@ -18,7 +18,11 @@ interface LocationArchetype {
   descriptions: string[];
 }
 
-const LOCATION_ARCHETYPES: LocationArchetype[] = [
+// ============================================
+// Классические данные D&D
+// ============================================
+
+const CLASSIC_LOCATIONS: LocationArchetype[] = [
   {
     type: "city",
     names: ["Тенебра", "Вельд", "Каэрн", "Оствинд"],
@@ -65,15 +69,7 @@ const LOCATION_ARCHETYPES: LocationArchetype[] = [
   },
 ];
 
-const CONNECTION_TYPES: ConnectionType[] = ["born", "lost", "served", "dreams"];
-
-interface FactionArchetype {
-  name: string;
-  goals: string;
-  description: string;
-}
-
-const FACTION_ARCHETYPES: FactionArchetype[] = [
+const CLASSIC_FACTIONS = [
   {
     name: "Гильдия Воров",
     goals: "Контролировать все тёмные дела в городе.",
@@ -106,24 +102,12 @@ const FACTION_ARCHETYPES: FactionArchetype[] = [
   },
 ];
 
-const NPC_ROLES: NpcRole[] = ["ally", "enemy", "neutral"];
-
-const NPC_NAMES = [
-  "Морган",
-  "Селена",
-  "Бартоломью",
-  "Изольда",
-  "Рэйвен",
-  "Ортега",
-  "Вивьен",
-  "Кальвин",
-  "Фрея",
-  "Дункан",
-  "Лира",
-  "Оскар",
+const CLASSIC_NPC_NAMES = [
+  "Морган", "Селена", "Бартоломью", "Изольда", "Рэйвен", "Ортега",
+  "Вивьен", "Кальвин", "Фрея", "Дункан", "Лира", "Оскар",
 ];
 
-const NPC_DESCRIPTIONS = [
+const CLASSIC_NPC_DESCRIPTIONS = [
   "Хитрый информатор с добрым лицом.",
   "Старый наёмник, уставший от крови.",
   "Жрица, потерявшая веру.",
@@ -132,7 +116,7 @@ const NPC_DESCRIPTIONS = [
   "Стражник, который берёт взятки.",
 ];
 
-const SITUATIONS = [
+const CLASSIC_SITUATIONS = [
   "В городе пропадают дети. Гильдия обвиняет храм. Храм обвиняет гильдию.",
   "Война на границе. Беженцы стекаются в город.",
   "Новый король взошёл на трон, и все ждут, что он сделает.",
@@ -142,6 +126,123 @@ const SITUATIONS = [
   "Проклятие пало на землю: урожай гибнет, скот болеет.",
   "Появился пророк, и толпы идут за ним.",
 ];
+
+// ============================================
+// Данные для Skyrim
+// ============================================
+
+const SKYRIM_LOCATIONS: LocationArchetype[] = [
+  {
+    type: "city",
+    names: ["Вайтран", "Солитьюд", "Виндхельм", "Рифтен", "Маркарт"],
+    descriptions: [
+      "Город у подножия Драконьего моста, окружённый равнинами.",
+      "Столица Скайрима, обитель Империи и Высокого короля.",
+      "Северный город, где чтят старые традиции и чтят Нордов.",
+      "Город воров, погрязший в коррупции и тенях.",
+      "Город серебряных рудников и клана Серебряной Крови.",
+    ],
+  },
+  {
+    type: "ruins",
+    names: ["Драконий предел", "Лабиринт Шалидора", "Альфтанд", "Мзулфт"],
+    descriptions: [
+      "Древние руины, полные драугров и ловушек.",
+      "Лабиринт древнего мага Шалидора, скрывающий тайны.",
+      "Подземелья, где спят мертвые.",
+      "Гномьи руины с работающими механизмами.",
+    ],
+  },
+  {
+    type: "temple",
+    names: ["Храм Небесной Гавани", "Святилище Азуры", "Храм Мары", "Храм Девяти"],
+    descriptions: [
+      "Величественный храм в Солитьюде.",
+      "Святилище даэдра, скрытое в горах.",
+      "Храм богини любви и семьи.",
+      "Главный храм в Вайтране, где молятся Девяти.",
+    ],
+  },
+  {
+    type: "wild",
+    names: ["Сумрачный лес", "Тундра Вайтрана", "Болото Хьялмарк", "Глотка мира"],
+    descriptions: [
+      "Лес, где обитают тролли и волки.",
+      "Бескрайние равнины, где часто летают драконы.",
+      "Опасные топи, кишащие монстрами.",
+      "Древнее горное ущелье, ведущее к Драконьему Пределу.",
+    ],
+  },
+];
+
+const SKYRIM_FACTIONS = [
+  {
+    name: "Соратники",
+    goals: "Защищать Скайрим и чтить традиции предков.",
+    description: "Древний орден воинов, обитающий в Йоррваскре.",
+  },
+  {
+    name: "Среброрукие",
+    goals: "Уничтожить Соратников и захватить власть.",
+    description: "Кровожадные наёмники, враждующие с Йоррваскром.",
+  },
+  {
+    name: "Талмор",
+    goals: "Установить господство эльфов и запретить Талос.",
+    description: "Шпионы и агенты Доминиона.",
+  },
+  {
+    name: "Гильдия Воров",
+    goals: "Вернуть былое влияние в Рифтене.",
+    description: "Воры, скупщики краденого и мастера скрытности.",
+  },
+  {
+    name: "Тёмное Братство",
+    goals: "Служить Матери Ночи и исполнять контракты.",
+    description: "Тайное общество ассасинов.",
+  },
+  {
+    name: "Империя",
+    goals: "Сохранить контроль над Скайримом любой ценой.",
+    description: "Легионеры и сторонники Империи.",
+  },
+  {
+    name: "Братья Бури",
+    goals: "Освободить Скайрим от Империи.",
+    description: "Мятежники, ведомые Ульфриком Буревестником.",
+  },
+];
+
+const SKYRIM_NPC_NAMES = [
+  "Свен", "Ралор", "Хульда", "Белетор", "Йорлунд", "Астрид",
+  "Дельфина", "Арнгейр", "Фаренгар", "Нирья", "Клавикус", "Люсьен",
+];
+
+const SKYRIM_NPC_DESCRIPTIONS = [
+  "Скупой торговец с кинжалом за пазухой.",
+  "Странник в чёрном плаще, скрывающий лицо.",
+  "Слуга даэдра, ищущий жертву.",
+  "Бывший легионер, уставший от войны.",
+  "Юная ученица магии из Коллегии Винтерхолда.",
+  "Охотник на драконов, знающий древние крики.",
+];
+
+const SKYRIM_SITUATIONS = [
+  "Дракон пролетел над Вайтраном. Все в панике.",
+  "Талмор арестовал местного жителя за поклонение Талосу.",
+  "Пропал ребёнок из деревни Ривервуд.",
+  "В руинах проснулись драугры, и они идут к городу.",
+  "Караван каджитов подвергся нападению бандитов.",
+  "В Виндхельме готовится мятеж против Империи.",
+  "Даэдра предлагает сделку, от которой сложно отказаться.",
+];
+
+// ============================================
+// Общие константы
+// ============================================
+
+const CONNECTION_TYPES: ConnectionType[] = ["born", "lost", "served", "dreams"];
+const NPC_ROLES: NpcRole[] = ["ally", "enemy", "neutral"];
 
 function pickOne<T>(arr: T[], rng: Rng): T {
   return arr[Math.floor(rng() * arr.length)];
@@ -169,8 +270,16 @@ export function generateWorld(
   characters: Character[],
   rng: Rng,
 ): WorldResult {
+  const isSkyrim = input.theme === "skyrim";
+  
+  const locationPool = isSkyrim ? SKYRIM_LOCATIONS : CLASSIC_LOCATIONS;
+  const factionPool = isSkyrim ? SKYRIM_FACTIONS : CLASSIC_FACTIONS;
+  const npcNamePool = isSkyrim ? SKYRIM_NPC_NAMES : CLASSIC_NPC_NAMES;
+  const npcDescPool = isSkyrim ? SKYRIM_NPC_DESCRIPTIONS : CLASSIC_NPC_DESCRIPTIONS;
+  const situationPool = isSkyrim ? SKYRIM_SITUATIONS : CLASSIC_SITUATIONS;
+
   // 1. Локации: 4 разных типа
-  const shuffledArchetypes = shuffle(LOCATION_ARCHETYPES, rng).slice(0, 4);
+  const shuffledArchetypes = shuffle(locationPool, rng).slice(0, 4);
   const locations: Location[] = shuffledArchetypes.map((a) => ({
     name: pickOne(a.names, rng),
     type: a.type,
@@ -198,10 +307,10 @@ export function generateWorld(
   // 3. Фракции: 3-4, гарантированно ally/enemy/neutral
   const attitudes: FactionAttitude[] = ["ally", "enemy", "neutral"];
   const factionCount = 3 + (rng() < 0.5 ? 1 : 0);
-  const factionPool = shuffle(FACTION_ARCHETYPES, rng);
+  const shuffledFactionPool = shuffle(factionPool, rng);
   const factions: Faction[] = [];
   for (let i = 0; i < factionCount; i++) {
-    const a = factionPool[i % factionPool.length];
+    const a = shuffledFactionPool[i % shuffledFactionPool.length];
     factions.push({
       name: a.name,
       goals: a.goals,
@@ -216,12 +325,12 @@ export function generateWorld(
   const usedNames = new Set<string>();
   for (let i = 0; i < characters.length; i++) {
     for (const role of NPC_ROLES) {
-      const name = pickUniqueName(NPC_NAMES, usedNames, rng);
+      const name = pickUniqueName(npcNamePool, usedNames, rng);
       usedNames.add(name);
       const npc: Npc = {
         name,
         role,
-        description: pickOne(NPC_DESCRIPTIONS, rng),
+        description: pickOne(npcDescPool, rng),
         location_index: Math.floor(rng() * locations.length),
         faction_index: Math.floor(rng() * shuffledFactions.length),
       };
@@ -231,7 +340,7 @@ export function generateWorld(
   }
 
   // 5. Ситуация
-  const situation = pickOne(SITUATIONS, rng);
+  const situation = pickOne(situationPool, rng);
 
   return {
     locations,

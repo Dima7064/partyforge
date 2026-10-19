@@ -15,9 +15,9 @@ export async function loadGeneratorData(): Promise<GeneratorData> {
 
   const [classes, races, backgrounds, traits, secrets, hookTemplates, toneWeights] =
     await Promise.all([
-      supabase.from("classes").select("id, name, role, ability_priorities, tone_tags, description"),
-      supabase.from("races").select("id, name, tone_tags, description"),
-      supabase.from("backgrounds").select("id, name, tone_tags, description"),
+      supabase.from("classes").select("id, name, name_ru, role, ability_priorities, tone_tags, theme, description"),
+      supabase.from("races").select("id, name, name_ru, tone_tags, theme, description"),
+      supabase.from("backgrounds").select("id, name, name_ru, tone_tags, description"),
       supabase.from("traits").select("id, type, name, tags, description"),
       supabase.from("secrets").select("id, text, tags"),
       supabase.from("hook_templates").select("id, template, type, tags"),

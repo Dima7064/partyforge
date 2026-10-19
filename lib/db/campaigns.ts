@@ -7,6 +7,7 @@ import type {
   Faction,
   GeneratorInput,
   Hook,
+  Invite,
   Location,
   Npc,
   Relationship,
@@ -60,14 +61,27 @@ export async function saveCampaign(
   }
   if (!inserted) throw new Error("Не удалось создать share_code");
 
-  // Master
+  // 1. Увеличиваем вечную статистику (созданные кампании)
+  const { data: stats } = await supabase
+    .from("user_stats")
+    .select("campaigns_created")
+    .eq("user_id", userId)
+    .maybeSingle();
+  
+  if (!stats) {
+    await supabase.from("user_stats").insert({ user_id: userId, campaigns_created: 1 });
+  } else {
+    await supabase.from("user_stats").update({ campaigns_created: stats.campaigns_created + 1 }).eq("user_id", userId);
+  }
+
+  // 2. Добавляем мастера в участники
   await supabase.from("campaign_members").insert({
     campaign_id: campaignId,
     user_id: userId,
     role: "master",
   });
 
-  // Characters
+  // 3. Сохраняем персонажей
   const characterRows = campaign.characters.map((c) => ({
     campaign_id: campaignId,
     name: c.name,
@@ -88,7 +102,16 @@ export async function saveCampaign(
   if (charsErr) throw charsErr;
   const charIds = (insertedChars ?? []).map((r) => r.id);
 
-  // Relationships
+  // 4. Сохраняем историю персонажей (для графиков в профиле)
+  const historyRows = campaign.characters.map((c) => ({
+    user_id: userId,
+    class_name: c.class_name,
+    race_name: c.race_name,
+    role: c.role,
+  }));
+  await supabase.from("user_character_history").insert(historyRows);
+
+  // 5. Сохраняем связи
   if (campaign.relationships.length > 0) {
     const relRows = campaign.relationships.map((r) => ({
       campaign_id: campaignId,
@@ -101,7 +124,7 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // Locations
+  // 6. Сохраняем локации
   const locationRows = campaign.locations.map((l) => ({
     campaign_id: campaignId,
     name: l.name,
@@ -126,7 +149,7 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // Factions
+  // 7. Сохраняем фракции
   const factionRows = campaign.factions.map((f) => ({
     campaign_id: campaignId,
     name: f.name,
@@ -141,6 +164,7 @@ export async function saveCampaign(
   if (factErr) throw factErr;
   const factIds = (insertedFacts ?? []).map((r) => r.id);
 
+  // 8. Сохраняем NPC
   if (campaign.npcs.length > 0) {
     const npcRows = campaign.npcs.map((n) => ({
       campaign_id: campaignId,
@@ -154,6 +178,7 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
+  // 9. Сохраняем крючки
   if (campaign.hooks.length > 0) {
     const hookRows = campaign.hooks.map((h) => ({
       campaign_id: campaignId,
@@ -166,7 +191,7 @@ export async function saveCampaign(
     if (error) throw error;
   }
 
-  // Достижения
+  // 10. Проверяем достижения
   const { count } = await supabase
     .from("campaign_members")
     .select("*", { count: "exact", head: true })
@@ -319,13 +344,33 @@ export async function getCampaignByCode(
     };
   });
 
-  // Фильтрация для игрока: только его персонаж и его секрет
   const filteredCharacters =
     viewerRole === "player" && viewerCharacterIndex !== undefined
       ? characters.map((c, i) =>
           i === viewerCharacterIndex ? c : { ...c, secret_text: "" },
         )
       : characters;
+
+  let invites: Invite[] = [];
+  if (viewerRole === "master") {
+    const { data: inv } = await supabase
+      .from("invites")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at", { ascending: false });
+    invites = (inv ?? []) as Invite[];
+  }
+
+  const my_notes: Record<string, string> = {};
+  if (viewerUserId) {
+    const { data: notes } = await supabase
+      .from("character_notes")
+      .select("character_id, content")
+      .eq("user_id", viewerUserId);
+    for (const n of notes ?? []) {
+      my_notes[n.character_id] = n.content;
+    }
+  }
 
   return {
     id: campaignId,
@@ -354,6 +399,8 @@ export async function getCampaignByCode(
     members,
     viewer_role: viewerRole,
     viewer_character_index: viewerCharacterIndex,
+    invites,
+    my_notes,
   };
 }
 
@@ -400,10 +447,36 @@ export async function joinCampaign(
   characterIndex: number,
 ): Promise<{ ok: true }> {
   const supabase = createServerClient();
+
+  const inviteCheck = await findInviteByCode(code);
+
+  let campaignShareCode = code;
+  let role: "master" | "player" = "player";
+  let invite: Invite | null = null;
+
+  if (inviteCheck) {
+    const { data: c } = await supabase
+      .from("campaigns")
+      .select("share_code")
+      .eq("id", inviteCheck.campaign_id)
+      .maybeSingle();
+    if (!c) throw new Error("Кампания не найдена");
+    campaignShareCode = c.share_code;
+    role = inviteCheck.invite.role;
+    invite = inviteCheck.invite;
+
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      throw new Error("Приглашение истекло");
+    }
+    if (invite.max_uses !== null && invite.uses_count >= invite.max_uses) {
+      throw new Error("Лимит приглашений исчерпан");
+    }
+  }
+
   const { data: campaign } = await supabase
     .from("campaigns")
     .select("id")
-    .eq("share_code", code)
+    .eq("share_code", campaignShareCode)
     .maybeSingle();
   if (!campaign) throw new Error("Кампания не найдена");
 
@@ -415,23 +488,58 @@ export async function joinCampaign(
     .maybeSingle();
   if (existing) throw new Error("Уже участник");
 
-  const { data: chars } = await supabase
-    .from("characters")
-    .select("id")
-    .eq("campaign_id", campaign.id)
-    .order("created_at");
-  if (!chars || characterIndex < 0 || characterIndex >= chars.length) {
-    throw new Error("Неверный персонаж");
+  let characterId: string | null = null;
+  let characterInfo: { class_name: string; race_name: string; role: string } | null = null;
+
+  if (role === "player") {
+    const { data: chars } = await supabase
+      .from("characters")
+      .select("id, class_name, race_name, role")
+      .eq("campaign_id", campaign.id)
+      .order("created_at");
+    if (!chars || characterIndex < 0 || characterIndex >= chars.length) {
+      throw new Error("Неверный персонаж");
+    }
+    characterId = chars[characterIndex].id;
+    characterInfo = chars[characterIndex];
   }
-  const characterId = chars[characterIndex].id;
 
   const { error } = await supabase.from("campaign_members").insert({
     campaign_id: campaign.id,
     user_id: userId,
-    role: "player",
+    role,
     character_id: characterId,
   });
   if (error) throw error;
+
+  if (invite) {
+    await supabase
+      .from("invites")
+      .update({ uses_count: invite.uses_count + 1 })
+      .eq("id", invite.id);
+  }
+
+  // ВЕЧНАЯ СТАТИСТИКА (присоединился)
+  const { data: stats } = await supabase
+    .from("user_stats")
+    .select("campaigns_joined")
+    .eq("user_id", userId)
+    .maybeSingle();
+  
+  if (!stats) {
+    await supabase.from("user_stats").insert({ user_id: userId, campaigns_joined: 1 });
+  } else {
+    await supabase.from("user_stats").update({ campaigns_joined: stats.campaigns_joined + 1 }).eq("user_id", userId);
+  }
+
+  if (characterInfo) {
+    await supabase.from("user_character_history").insert({
+      user_id: userId,
+      class_name: characterInfo.class_name,
+      race_name: characterInfo.race_name,
+      role: characterInfo.role,
+    });
+  }
 
   const { count } = await supabase
     .from("campaign_members")
@@ -442,4 +550,272 @@ export async function joinCampaign(
   if ((count ?? 0) >= 5) await unlockAchievement(userId, "five_joins");
 
   return { ok: true };
+}
+
+export async function updateCharacter(
+  characterId: string,
+  userId: string,
+  updates: {
+    name?: string;
+    class_name?: string;
+    race_name?: string;
+    background_name?: string;
+    abilities?: Record<string, number>;
+    personality?: {
+      values?: string[];
+      fears?: string[];
+      habits?: string[];
+      motivation?: string;
+    };
+    backstory?: string;
+  },
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const { data: char } = await supabase
+    .from("characters")
+    .select("id, campaign_id")
+    .eq("id", characterId)
+    .maybeSingle();
+  if (!char) throw new Error("Персонаж не найден");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role, character_id")
+    .eq("campaign_id", char.campaign_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const isMaster = member?.role === "master";
+  const isOwner = member?.character_id === characterId;
+  if (!isMaster && !isOwner) throw new Error("Нет доступа");
+
+  if (updates.class_name) {
+    const { data: cls } = await supabase
+      .from("classes")
+      .select("id")
+      .eq("name", updates.class_name)
+      .maybeSingle();
+    if (!cls) throw new Error("Такого класса нет");
+  }
+  if (updates.race_name) {
+    const { data: race } = await supabase
+      .from("races")
+      .select("id")
+      .eq("name", updates.race_name)
+      .maybeSingle();
+    if (!race) throw new Error("Такой расы нет");
+  }
+  if (updates.background_name) {
+    const { data: bg } = await supabase
+      .from("backgrounds")
+      .select("id")
+      .eq("name", updates.background_name)
+      .maybeSingle();
+    if (!bg) throw new Error("Такой предыстории нет");
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (updates.name !== undefined) patch.name = updates.name;
+  if (updates.class_name !== undefined) patch.class_name = updates.class_name;
+  if (updates.race_name !== undefined) patch.race_name = updates.race_name;
+  if (updates.background_name !== undefined) patch.background_name = updates.background_name;
+  if (updates.abilities !== undefined) patch.abilities = updates.abilities;
+  if (updates.personality !== undefined) patch.personality = updates.personality;
+  if (updates.backstory !== undefined) patch.backstory = updates.backstory;
+
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await supabase
+    .from("characters")
+    .update(patch)
+    .eq("id", characterId);
+  if (error) throw error;
+
+  await unlockAchievement(userId, "character_editor");
+}
+
+export async function updateRelationshipType(
+  relationshipId: string,
+  userId: string,
+  newType: string,
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const { data: rel } = await supabase
+    .from("relationships")
+    .select("id, campaign_id")
+    .eq("id", relationshipId)
+    .maybeSingle();
+  if (!rel) throw new Error("Связь не найдена");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", rel.campaign_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (member?.role !== "master") throw new Error("Только мастер может менять связи");
+
+  const { error } = await supabase
+    .from("relationships")
+    .update({ type: newType })
+    .eq("id", relationshipId);
+  if (error) throw error;
+}
+
+export async function createInvite(
+  campaignCode: string,
+  userId: string,
+  options: { role: "player" | "master"; expiresInHours?: number; maxUses?: number },
+): Promise<Invite> {
+  const supabase = createServerClient();
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", campaignCode)
+    .maybeSingle();
+  if (!campaign) throw new Error("Кампания не найдена");
+  if (campaign.user_id !== userId) throw new Error("Только мастер может приглашать");
+
+  const code = generateShareCode();
+  const expires_at = options.expiresInHours
+    ? new Date(Date.now() + options.expiresInHours * 3600 * 1000).toISOString()
+    : null;
+
+  const { data, error } = await supabase
+    .from("invites")
+    .insert({
+      campaign_id: campaign.id,
+      code,
+      role: options.role,
+      created_by: userId,
+      expires_at,
+      max_uses: options.maxUses ?? null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getInvites(
+  campaignCode: string,
+  userId: string,
+): Promise<Invite[]> {
+  const supabase = createServerClient();
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", campaignCode)
+    .maybeSingle();
+  if (!campaign) throw new Error("Кампания не найдена");
+  if (campaign.user_id !== userId) throw new Error("Только мастер видит приглашения");
+
+  const { data } = await supabase
+    .from("invites")
+    .select("*")
+    .eq("campaign_id", campaign.id)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function deleteInvite(
+  inviteId: string,
+  userId: string,
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const { data: inv } = await supabase
+    .from("invites")
+    .select("id, created_by")
+    .eq("id", inviteId)
+    .maybeSingle();
+  if (!inv) throw new Error("Приглашение не найдено");
+  if (inv.created_by !== userId) throw new Error("Нет доступа");
+
+  const { error } = await supabase.from("invites").delete().eq("id", inviteId);
+  if (error) throw error;
+}
+
+export async function findInviteByCode(
+  code: string,
+): Promise<{ invite: Invite; campaign_id: string } | null> {
+  const supabase = createServerClient();
+  const { data } = await supabase
+    .from("invites")
+    .select("*")
+    .eq("code", code)
+    .maybeSingle();
+  if (!data) return null;
+  return { invite: data, campaign_id: data.campaign_id };
+}
+
+export async function getNote(
+  characterId: string,
+  userId: string,
+): Promise<string> {
+  const supabase = createServerClient();
+  const { data } = await supabase
+    .from("character_notes")
+    .select("content")
+    .eq("character_id", characterId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.content ?? "";
+}
+
+export async function saveNote(
+  characterId: string,
+  userId: string,
+  content: string,
+): Promise<void> {
+  const supabase = createServerClient();
+  const { error } = await supabase.from("character_notes").upsert(
+    {
+      character_id: characterId,
+      user_id: userId,
+      content,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,character_id" },
+  );
+  if (error) throw error;
+}
+
+export async function leaveCampaign(
+  campaignCode: string,
+  userId: string,
+): Promise<void> {
+  const supabase = createServerClient();
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", campaignCode)
+    .maybeSingle();
+  if (!campaign) throw new Error("Кампания не найдена");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", campaign.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!member) throw new Error("Ты не участник этой кампании");
+  if (member.role === "master") {
+    throw new Error("Мастер не может просто покинуть кампанию. Ты можешь её удалить.");
+  }
+
+  const { error } = await supabase
+    .from("campaign_members")
+    .delete()
+    .eq("campaign_id", campaign.id)
+    .eq("user_id", userId)
+    .eq("role", "player");
+
+  if (error) throw error;
+  // Статистика в user_stats и user_character_history НЕ удаляется.
 }

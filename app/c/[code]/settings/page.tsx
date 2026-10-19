@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 import { getCampaignByCode } from "@/lib/db/campaigns";
 import { SettingsForm } from "@/components/campaign/SettingsForm";
+import { InvitesPanel } from "@/components/campaign/InvitesPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +58,7 @@ export default async function CampaignSettingsPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Приглашение</CardTitle>
+          <CardTitle>Приглашение по ссылке</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-forge-muted text-sm">
@@ -75,6 +76,11 @@ export default async function CampaignSettingsPage({
         </CardContent>
       </Card>
 
+      <InvitesPanel
+        campaignCode={code}
+        initialInvites={campaign.invites ?? []}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Участники ({campaign.members.length})</CardTitle>
@@ -82,7 +88,9 @@ export default async function CampaignSettingsPage({
         <CardContent className="space-y-2">
           {campaign.members.map((m) => (
             <div key={m.user_id} className="flex items-center justify-between">
-              <span className="text-forge-parchment">{m.username || m.user_id.slice(0, 8)}</span>
+              <span className="text-forge-parchment">
+                {m.username || m.user_id.slice(0, 8)}
+              </span>
               <Badge variant={m.role === "master" ? "gold" : "muted"}>
                 {m.role === "master" ? "Мастер" : "Игрок"}
               </Badge>

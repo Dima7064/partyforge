@@ -20,7 +20,9 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
   const [active, setActive] = useState<TabId>("party");
 
   const isPlayer = campaign.viewer_role === "player";
+  const isMaster = campaign.viewer_role === "master";
   const myIndex = campaign.viewer_character_index;
+
   const visibleCharacters =
     isPlayer && myIndex !== undefined
       ? [campaign.characters[myIndex]]
@@ -52,9 +54,26 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
             </p>
           )}
           <div className="grid md:grid-cols-2 gap-4">
-            {visibleCharacters.map((c, i) => (
-              <CharacterCard key={i} character={c} />
-            ))}
+            {visibleCharacters.map((c, i) => {
+              const realIndex = isPlayer && myIndex !== undefined ? myIndex : i;
+              const canEdit = isMaster || (isPlayer && realIndex === myIndex);
+              const canSeeNotes = isPlayer && realIndex === myIndex;
+              const note = c.id ? campaign.my_notes?.[c.id] ?? "" : "";
+              return (
+                <CharacterCard
+                  key={realIndex}
+                  character={c}
+                  characterIndex={realIndex}
+                  campaignCode={campaign.share_code}
+                  characters={campaign.characters}
+                  relationships={campaign.relationships}
+                  hooks={campaign.hooks}
+                  canEdit={canEdit}
+                  canSeeNotes={canSeeNotes}
+                  initialNote={note}
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -63,6 +82,8 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
         <RelationshipsGraph
           characters={campaign.characters}
           relationships={campaign.relationships}
+          canEdit={isMaster}
+          campaignCode={campaign.share_code}
         />
       )}
 
@@ -76,7 +97,14 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
         />
       )}
 
-      {active === "hooks" && <HooksTab hooks={campaign.hooks} />}
+      {active === "hooks" && (
+        <HooksTab
+          hooks={campaign.hooks}
+          characters={campaign.characters}
+          hideOtherCharacters={isPlayer}
+          myCharacterIndex={myIndex}
+        />
+      )}
     </div>
   );
 }

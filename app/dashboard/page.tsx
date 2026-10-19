@@ -9,7 +9,7 @@ import { createServerClient } from "@/lib/supabase/server";
 
 const THEME_LABEL: Record<string, string> = {
   classic: "Классика D&D",
-  skyrim: "Скайрим",
+  skyrim: "Skyrim",
 };
 
 const STATUS_LABEL: Record<string, string> = {
