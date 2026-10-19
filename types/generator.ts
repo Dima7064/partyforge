@@ -255,6 +255,8 @@ export interface SavedCampaignData {
   members: CampaignMember[];
   viewer_role: "master" | "player" | "none";
   viewer_character_index?: number;
+  invites?: Invite[];
+  my_notes?: Record<string, string>;
 }
 
 // ============================================
@@ -273,18 +275,47 @@ export interface UserAchievement {
   name_ru: string;
   description_ru: string;
   icon: string;
-  unlocked_at: string;
+  unlocked_at: string | null; // null = не выполнено
 }
 
 export interface ProfileStats {
   campaigns_created: number;
   campaigns_joined: number;
   total_characters: number;
+  average_party_size: number;
   favorite_class: string | null;
   favorite_class_ru: string | null;
   favorite_race: string | null;
   favorite_race_ru: string | null;
+  favorite_role: string | null;
+  favorite_role_ru: string | null;
   class_distribution: { name: string; count: number }[];
   race_distribution: { name: string; count: number }[];
   campaigns_by_month: { month: string; count: number }[];
+  theme_distribution: { name: string; count: number }[];
+  relationship_distribution: { name: string; count: number }[];
+  achievements_total: number;
+  achievements_unlocked: number;
+}
+
+// ============================================
+// Приглашения и заметки
+// ============================================
+
+export interface Invite {
+  id: string;
+  campaign_id: string;
+  code: string;
+  role: "player" | "master";
+  created_by: string;
+  created_at: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  uses_count: number;
+}
+
+export interface CharacterNote {
+  character_id: string;
+  content: string;
+  updated_at: string;
 }

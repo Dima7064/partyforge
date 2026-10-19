@@ -23,6 +23,16 @@ export const RACE_NAMES_RU: Record<string, string> = {
   "Half-Elf": "Полуэльф",
   "Half-Orc": "Полуорк",
   Tiefling: "Тифлинг",
+    Nord: "Норд",
+  Dunmer: "Данмер",
+  Altmer: "Альтмер",
+  Bosmer: "Босмер",
+  Khajiit: "Каджит",
+  Argonian: "Аргонианин",
+  Breton: "Бретон",
+  Redguard: "Редгард",
+  Orsimer: "Орсимер",
+  Imperial: "Имперец",
 };
 
 export const BACKGROUND_NAMES_RU: Record<string, string> = {

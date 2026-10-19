@@ -74,7 +74,7 @@ export default function GeneratePage() {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Проклятие Тенебры"
+                placeholder="Сумрачный лес"
               />
             </div>
 
@@ -86,7 +86,7 @@ export default function GeneratePage() {
                 onChange={(e) => setTheme(e.target.value as Theme)}
               >
                 <option value="classic">Классика D&amp;D</option>
-                <option value="skyrim">Скайрим</option>
+                <option value="skyrim">Skyrim</option>
               </Select>
             </div>
 

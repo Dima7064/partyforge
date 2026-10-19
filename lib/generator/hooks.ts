@@ -6,6 +6,13 @@ import type {
   Rng,
 } from "@/types/generator";
 
+const TYPE_LABEL_RU: Record<string, string> = {
+  personal: "Личный",
+  social: "Социальный",
+  exploration: "Исследование",
+  combat: "Бой",
+};
+
 export function generateHooks(
   partial: Omit<Campaign, "hooks">,
   templates: HookTemplateRow[],
@@ -25,7 +32,7 @@ export function generateHooks(
 
     const description = fillTemplate(template.template, char, partial, rng);
     hooks.push({
-      title: `${char.name}: ${template.type}`,
+      title: `${char.name}: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`, // <--- Перевели
       description,
       type: template.type,
       character_index: i,
@@ -38,7 +45,7 @@ export function generateHooks(
       const char = partial.characters[0];
       const description = fillTemplate(template.template, char, partial, rng);
       hooks.push({
-        title: `Партия: ${template.type}`,
+        title: `Партия: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`, // <--- Перевели
         description,
         type: template.type,
         character_index: 0,
@@ -70,28 +77,19 @@ function fillTemplate(
   rng: Rng,
 ): string {
   let result = template;
-
   result = result.replace(/{character}/g, character.name);
-
   result = result.replace(/{npc}/g, () => {
     const arr = partial.npcs;
     return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "незнакомец";
   });
-
   result = result.replace(/{faction}/g, () => {
     const arr = partial.factions;
-    return arr.length > 0
-      ? arr[Math.floor(rng() * arr.length)].name
-      : "неизвестная фракция";
+    return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "неизвестная фракция";
   });
-
   result = result.replace(/{location}/g, () => {
     const arr = partial.locations;
-    return arr.length > 0
-      ? arr[Math.floor(rng() * arr.length)].name
-      : "неизвестное место";
+    return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "неизвестное место";
   });
-
   return result;
 }
 

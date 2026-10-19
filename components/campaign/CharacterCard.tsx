@@ -1,16 +1,26 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Character } from "@/types/generator";
+import type {
+  Character,
+  Hook,
+  Relationship,
+} from "@/types/generator";
 import {
   backgroundNameRu,
   classNameRu,
   raceNameRu,
 } from "@/data/localization";
+import { CharacterEditModal } from "./CharacterEditModal";
+import { CharacterNotes } from "./CharacterNotes";
 
 const ROLE_LABEL: Record<string, string> = {
   tank: "Танк",
@@ -30,99 +40,206 @@ const ABILITY_LABEL: Record<string, string> = {
   cha: "ХАР",
 };
 
-export function CharacterCard({ character }: { character: Character }) {
+const REL_LABEL: Record<string, string> = {
+  trust: "Доверие",
+  debt: "Долг",
+  love: "Любовь",
+  conflict: "Конфликт",
+  secret: "Тайна",
+};
+
+export function CharacterCard({
+  character,
+  characterIndex,
+  campaignCode,
+  characters,
+  relationships,
+  hooks,
+  canEdit,
+  canSeeNotes,
+  initialNote,
+}: {
+  character: Character;
+  characterIndex: number;
+  campaignCode: string;
+  characters: Character[];
+  relationships: Relationship[];
+  hooks: Hook[];
+  canEdit: boolean;
+  canSeeNotes: boolean;
+  initialNote: string;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+
+  const myRelationships = relationships.filter(
+    (r) =>
+      r.source_character_index === characterIndex ||
+      r.target_character_index === characterIndex,
+  );
+
+  const myHooks = hooks.filter((h) => h.character_index === characterIndex);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
-          <span>{character.name}</span>
-          <Badge variant="muted">
-            {ROLE_LABEL[character.role] ?? character.role}
-          </Badge>
-        </CardTitle>
-        <p className="text-sm text-forge-muted">
-          {raceNameRu(character.race_name)} ·{" "}
-          {classNameRu(character.class_name)} ·{" "}
-          {backgroundNameRu(character.background_name)} · Ур. {character.level}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-6 gap-1">
-          {Object.entries(character.abilities).map(([key, value]) => (
-            <div
-              key={key}
-              className="bg-forge-bg border border-forge-border rounded p-1.5 text-center"
-            >
-              <div className="text-[10px] text-forge-muted">
-                {ABILITY_LABEL[key] ?? key}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
+            <span>{character.name}</span>
+            <Badge variant="muted">
+              {ROLE_LABEL[character.role] ?? character.role}
+            </Badge>
+          </CardTitle>
+          <p className="text-sm text-forge-muted">
+            {raceNameRu(character.race_name)} ·{" "}
+            {classNameRu(character.class_name)} ·{" "}
+            {backgroundNameRu(character.background_name)} · Ур. {character.level}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-6 gap-1">
+            {Object.entries(character.abilities).map(([key, value]) => (
+              <div
+                key={key}
+                className="bg-forge-bg border border-forge-border rounded p-1.5 text-center"
+              >
+                <div className="text-[10px] text-forge-muted">
+                  {ABILITY_LABEL[key] ?? key}
+                </div>
+                <div className="text-lg font-bold text-forge-gold-light">{value}</div>
               </div>
-              <div className="text-lg font-bold text-forge-gold-light">{value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div>
-          <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-            Ценности
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {character.personality.values.map((v) => (
-              <Badge key={v} variant="gold">{v}</Badge>
             ))}
           </div>
-        </div>
 
-        <div>
-          <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-            Страхи
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {character.personality.fears.map((f) => (
-              <Badge key={f} variant="ember">{f}</Badge>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-            Привычки
-          </div>
-          <p className="text-sm text-forge-parchment">
-            {character.personality.habits.join(", ")}
-          </p>
-        </div>
-
-        <div>
-          <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-            Мотивация
-          </div>
-          <p className="text-sm text-forge-parchment">
-            {character.personality.motivation}
-          </p>
-        </div>
-
-        {character.backstory && (
           <div>
             <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-              Предыстория
+              Ценности
             </div>
-            <p className="text-sm text-forge-parchment leading-relaxed">
-              {character.backstory}
-            </p>
+            <div className="flex flex-wrap gap-1">
+              {character.personality.values.map((v) => (
+                <Badge key={v} variant="gold">{v}</Badge>
+              ))}
+            </div>
           </div>
-        )}
 
-        {character.secret_text && (
           <div>
             <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
-              Тайна (только для мастера)
+              Страхи
             </div>
-            <p className="text-sm text-forge-ember italic">
-              {character.secret_text}
+            <div className="flex flex-wrap gap-1">
+              {character.personality.fears.map((f) => (
+                <Badge key={f} variant="ember">{f}</Badge>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+              Привычки
+            </div>
+            <p className="text-sm text-forge-parchment">
+              {character.personality.habits.join(", ")}
             </p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <div>
+            <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+              Мотивация
+            </div>
+            <p className="text-sm text-forge-parchment">
+              {character.personality.motivation}
+            </p>
+          </div>
+
+          {character.backstory && (
+            <div>
+              <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+                Предыстория
+              </div>
+              <p className="text-sm text-forge-parchment leading-relaxed">
+                {character.backstory}
+              </p>
+            </div>
+          )}
+
+          {character.secret_text && (
+            <div>
+              <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+                Тайна (только для мастера)
+              </div>
+              <p className="text-sm text-forge-ember italic">
+                {character.secret_text}
+              </p>
+            </div>
+          )}
+
+          {myRelationships.length > 0 && (
+            <div>
+              <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+                Связи
+              </div>
+              <ul className="text-sm text-forge-parchment space-y-1">
+                {myRelationships.map((r, i) => {
+                  const otherIdx =
+                    r.source_character_index === characterIndex
+                      ? r.target_character_index
+                      : r.source_character_index;
+                  const other = characters[otherIdx];
+                  return (
+                    <li key={i}>
+                      <span className="text-forge-gold">
+                        {REL_LABEL[r.type] ?? r.type}
+                      </span>{" "}
+                      с {other?.name ?? `#${otherIdx}`}: {r.description}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {myHooks.length > 0 && (
+            <div>
+              <div className="text-xs text-forge-muted uppercase tracking-wide mb-1">
+                Крючки
+              </div>
+              <ul className="text-sm text-forge-parchment space-y-1">
+                {myHooks.map((h, i) => (
+                  <li key={i}>{h.description}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {canSeeNotes && (
+            <CharacterNotes
+              characterId={character.id ?? ""}
+              initialContent={initialNote}
+            />
+          )}
+
+          {canEdit && (
+            <div className="pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditOpen(true)}
+              >
+                Редактировать
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {canEdit && (
+        <CharacterEditModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          character={character}
+          characterId={character.id ?? ""}
+          campaignCode={campaignCode}
+        />
+      )}
+    </>
   );
 }

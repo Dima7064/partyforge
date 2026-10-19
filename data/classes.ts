@@ -1,5 +1,6 @@
 export interface ClassSeed {
   name: string;
+  theme: string[];
   role: "tank" | "healer" | "dps" | "face" | "control" | "support";
   ability_priorities: string[];
   tone_tags: string[];
@@ -9,6 +10,7 @@ export interface ClassSeed {
 export const classes: ClassSeed[] = [
   {
     name: "Barbarian",
+    theme: ["classic", "skyrim"],
     role: "tank",
     ability_priorities: ["str", "con", "dex", "wis", "cha", "int"],
     tone_tags: ["dark", "heroic", "wild"],
@@ -16,6 +18,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Bard",
+    theme: ["classic", "skyrim"],
     role: "face",
     ability_priorities: ["cha", "dex", "con", "wis", "int", "str"],
     tone_tags: ["heroic", "comedic", "political"],
@@ -23,6 +26,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Cleric",
+    theme: ["classic", "skyrim"],
     role: "healer",
     ability_priorities: ["wis", "con", "str", "dex", "cha", "int"],
     tone_tags: ["heroic", "dark", "religious"],
@@ -30,6 +34,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Druid",
+    theme: ["classic", "skyrim"],
     role: "control",
     ability_priorities: ["wis", "con", "dex", "int", "cha", "str"],
     tone_tags: ["wild", "heroic", "dark"],
@@ -37,6 +42,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Fighter",
+    theme: ["classic", "skyrim"],
     role: "tank",
     ability_priorities: ["str", "con", "dex", "wis", "cha", "int"],
     tone_tags: ["heroic", "political", "dark"],
@@ -44,6 +50,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Monk",
+    theme: ["classic", "skyrim"],
     role: "dps",
     ability_priorities: ["dex", "wis", "con", "str", "cha", "int"],
     tone_tags: ["heroic", "wild", "political"],
@@ -51,6 +58,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Paladin",
+    theme: ["classic", "skyrim"],
     role: "tank",
     ability_priorities: ["str", "cha", "con", "wis", "dex", "int"],
     tone_tags: ["heroic", "religious", "dark"],
@@ -58,6 +66,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Ranger",
+    theme: ["classic", "skyrim"],
     role: "dps",
     ability_priorities: ["dex", "wis", "con", "str", "int", "cha"],
     tone_tags: ["wild", "heroic", "dark"],
@@ -65,6 +74,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Rogue",
+    theme: ["classic", "skyrim"],
     role: "dps",
     ability_priorities: ["dex", "con", "int", "wis", "cha", "str"],
     tone_tags: ["dark", "political", "comedic"],
@@ -72,6 +82,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Sorcerer",
+    theme: ["classic", "skyrim"],
     role: "dps",
     ability_priorities: ["cha", "con", "dex", "wis", "int", "str"],
     tone_tags: ["dark", "wild", "heroic"],
@@ -79,6 +90,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Warlock",
+    theme: ["classic", "skyrim"],
     role: "dps",
     ability_priorities: ["cha", "con", "dex", "wis", "int", "str"],
     tone_tags: ["dark", "political", "wild"],
@@ -86,6 +98,7 @@ export const classes: ClassSeed[] = [
   },
   {
     name: "Wizard",
+    theme: ["classic", "skyrim"],
     role: "control",
     ability_priorities: ["int", "con", "dex", "wis", "cha", "str"],
     tone_tags: ["dark", "heroic", "political"],

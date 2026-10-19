@@ -13,7 +13,6 @@ import { pickUniqueName } from "./names";
 import { generatePersonality } from "./personality";
 import { generateBackstory } from "./backstory";
 import { pickSecret } from "./secret";
-import { portraitForCharacter } from "./images";
 
 function buildToneWeightMap(data: GeneratorData, tone: string) {
   const map = new Map<string, number>();
@@ -34,6 +33,7 @@ export function pickClass(
 
   const candidates: Weighted<ClassRow>[] = data.classes
     .filter((c) => !banned.has(c.name) && !excludeIds.has(c.id))
+    .filter((r) => (r.theme || ["classic"]).includes(input.theme)) // ЗАЩИТА ОТ ОШИБКИ
     .map((c) => ({ item: c, weight: toneMap.get(c.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
@@ -53,6 +53,7 @@ export function pickRace(
 
   const candidates: Weighted<RaceRow>[] = data.races
     .filter((r) => !banned.has(r.name))
+    .filter((r) => (r.theme || ["classic"]).includes(input.theme)) // ЗАЩИТА ОТ ОШИБКИ
     .map((r) => ({ item: r, weight: toneMap.get(r.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
@@ -104,8 +105,5 @@ export function generateCharacter(
 
   const backstory = generateBackstory(partial, input.tone, ctx.rng);
 
-  const finalChar: Character = { ...partial, backstory };
-  finalChar.image_url = portraitForCharacter(finalChar);
-
-  return finalChar;
+  return { ...partial, backstory };
 }
