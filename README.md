@@ -2,7 +2,7 @@
 
 Конструктор партий персонажей, миров и сюжетных крючков для настольных ролевых игр (D&D 5e).
 
-**Живая ссылка:** [partyforge.vercel.app](https://partyforge.vercel.app) (требует VPN для просмотра из некоторых регионов)
+**Живая ссылка:** [partyforge.vercel.app](https://partyforge.vercel.app)
 
 ## Что делает
 
