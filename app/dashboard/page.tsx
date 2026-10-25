@@ -5,11 +5,21 @@ import { getProfile } from "@/lib/db/profiles";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SmartLink } from "@/components/ui/smart-link";
 import { createServerClient } from "@/lib/supabase/server";
+
+function formatPlayers(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 14) return `${n} игроков`;
+  if (mod10 === 1) return `${n} игрок`;
+  if (mod10 >= 2 && mod10 <= 4) return `${n} игрока`;
+  return `${n} игроков`;
+}
 
 const THEME_LABEL: Record<string, string> = {
   classic: "Классика D&D",
-  skyrim: "Skyrim",
+  skyrim: "Скайрим",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -32,7 +42,9 @@ export default async function DashboardPage() {
     .eq("user_id", user.id);
 
   const campaignIds = (memberships ?? []).map((m) => m.campaign_id);
-  const roleMap = new Map((memberships ?? []).map((m) => [m.campaign_id, m.role]));
+  const roleMap = new Map(
+    (memberships ?? []).map((m) => [m.campaign_id, m.role]),
+  );
 
   const campaigns: Array<{
     id: string;
@@ -47,7 +59,9 @@ export default async function DashboardPage() {
           (
             await admin
               .from("campaigns")
-              .select("id, share_code, title, theme, status, party_size, created_at")
+              .select(
+                "id, share_code, title, theme, status, party_size, created_at",
+              )
               .in("id", campaignIds)
               .order("created_at", { ascending: false })
           ).data ?? []
@@ -55,13 +69,16 @@ export default async function DashboardPage() {
       : [];
 
   return (
-    <main className="min-h-screen p-8 max-w-5xl mx-auto space-y-8">
+    <main
+      id="main-content"
+      className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto space-y-8"
+    >
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <p className="text-forge-muted text-sm uppercase tracking-wider">
             Личный кабинет
           </p>
-          <h1 className="text-4xl font-bold text-forge-gold-light">
+          <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light">
             Привет, {profile.username}
           </h1>
         </div>
@@ -72,9 +89,9 @@ export default async function DashboardPage() {
           <Link href="/join">
             <Button variant="outline">Присоединиться</Button>
           </Link>
-          <Link href="/profile">
+          <SmartLink href="/profile">
             <Button variant="ghost">Профиль</Button>
-          </Link>
+          </SmartLink>
         </div>
       </div>
 
@@ -89,32 +106,45 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
-            {campaigns.map((c) => (
-              <Card key={c.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
-                    <span>{c.title}</span>
-                    <Badge variant="muted">{STATUS_LABEL[c.status] ?? c.status}</Badge>
-                  </CardTitle>
-                  <p className="text-xs text-forge-muted">
-                    {THEME_LABEL[c.theme] ?? c.theme} · {c.party_size} героев
-                  </p>
-                </CardHeader>
-                <CardContent className="flex gap-2 flex-wrap">
-                  <Badge variant="gold">
-                    {roleMap.get(c.id) === "master" ? "Мастер" : "Игрок"}
-                  </Badge>
-                  <Link href={`/c/${c.share_code}`}>
-                    <Button size="sm" variant="outline">Открыть</Button>
-                  </Link>
-                  {roleMap.get(c.id) === "master" && (
-                    <Link href={`/c/${c.share_code}/settings`}>
-                      <Button size="sm" variant="ghost">Настройки</Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaigns.map((c, i) => (
+              <div
+                key={c.id}
+                className="animate-fade-up stagger"
+                style={{ ["--stagger" as string]: String(i) }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
+                      <span>{c.title}</span>
+                      <Badge variant="muted">
+                        {STATUS_LABEL[c.status] ?? c.status}
+                      </Badge>
+                    </CardTitle>
+                    <p className="text-xs text-forge-muted">
+                      {THEME_LABEL[c.theme] ?? c.theme} ·{" "}
+                      {formatPlayers(c.party_size - 1)}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex gap-2 flex-wrap">
+                    <Badge variant="gold">
+                      {roleMap.get(c.id) === "master" ? "Мастер" : "Игрок"}
+                    </Badge>
+                    <Link href={`/c/${c.share_code}`}>
+                      <Button size="sm" variant="outline">
+                        Открыть
+                      </Button>
                     </Link>
-                  )}
-                </CardContent>
-              </Card>
+                    {roleMap.get(c.id) === "master" && (
+                      <SmartLink href={`/c/${c.share_code}/settings`}>
+                        <Button size="sm" variant="ghost">
+                          Настройки
+                        </Button>
+                      </SmartLink>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         )}

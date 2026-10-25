@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Modal } from "@/components/ui/modal";
+import { useToast } from "@/lib/hooks/useToast";
+import { shouldShowAchievement } from "@/lib/achievements-client";
 import type { Character } from "@/types/generator";
 
 interface Options {
@@ -30,18 +33,16 @@ export function CharacterEditModal({
   onClose,
   character,
   characterId,
-  campaignCode,
 }: {
   open: boolean;
   onClose: () => void;
   character: Character;
   characterId: string;
-  campaignCode: string;
 }) {
   const router = useRouter();
+  const { show, showAchievement } = useToast();
   const [options, setOptions] = useState<Options | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState(character.name);
   const [className, setClassName] = useState(character.class_name);
@@ -59,14 +60,11 @@ export function CharacterEditModal({
     fetch("/api/catalog/options")
       .then((r) => r.json())
       .then((d) => setOptions(d.data))
-      .catch(() => setError("Не удалось загрузить список классов/рас"));
-  }, [open, options]);
-
-  if (!open) return null;
+      .catch(() => show("error", "Не удалось загрузить список классов/рас"));
+  }, [open, options, show]);
 
   async function handleSave() {
     setSaving(true);
-    setError(null);
     try {
       const res = await fetch(`/api/characters/${characterId}`, {
         method: "PATCH",
@@ -90,29 +88,45 @@ export function CharacterEditModal({
         const err = await res.json();
         throw new Error(err.error ?? "Ошибка");
       }
+
+      if (shouldShowAchievement("character_editor")) {
+        showAchievement(
+          "Кузнец судеб",
+          "Отредактируй персонажа вручную",
+          "⚒️",
+        );
+      } else {
+        show("success", "Персонаж обновлён");
+      }
+
       router.refresh();
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка");
+      show("error", e instanceof Error ? e.message : "Ошибка");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Редактировать персонажа"
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            Отмена
+          </Button>
+          <Button onClick={handleSave} disabled={saving || !options} aria-busy={saving}>
+            {saving ? "Сохраняем..." : "Сохранить"}
+          </Button>
+        </>
+      }
     >
-      <div
-        className="bg-forge-surface border border-forge-border rounded-lg max-w-2xl w-full p-6 space-y-4 my-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-2xl font-bold text-forge-gold-light">
-          Редактировать персонажа
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-4">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="name">Имя</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -155,6 +169,7 @@ export function CharacterEditModal({
                   type="number"
                   min={1}
                   max={30}
+                  aria-label={ABILITY_LABEL[k]}
                   value={abilities[k]}
                   onChange={(e) =>
                     setAbilities({ ...abilities, [k]: Number(e.target.value) })
@@ -186,18 +201,7 @@ export function CharacterEditModal({
           <Label htmlFor="backstory">Предыстория</Label>
           <Textarea id="backstory" rows={5} value={backstory} onChange={(e) => setBackstory(e.target.value)} />
         </div>
-
-        {error && <p className="text-forge-ember text-sm">{error}</p>}
-
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Отмена
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !options}>
-            {saving ? "Сохраняем..." : "Сохранить"}
-          </Button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

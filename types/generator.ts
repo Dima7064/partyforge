@@ -74,7 +74,9 @@ export interface Character {
   personality: Personality;
   backstory: string;
   secret_text: string;
-  image_url?: string;
+  image_url?: string | null;
+  image_width?: number;
+  image_height?: number;
 }
 
 // ============================================
@@ -96,7 +98,9 @@ export interface Location {
   name: string;
   type: string;
   description: string;
-  image_url?: string;
+  image_url?: string | null;
+  image_width?: number;
+  image_height?: number;
 }
 
 export interface CharacterLocation {
@@ -118,7 +122,9 @@ export interface Npc {
   description: string;
   location_index?: number;
   faction_index?: number;
-  image_url?: string;
+  image_url?: string | null;
+  image_width?: number;
+  image_height?: number;
 }
 
 // ============================================
@@ -126,10 +132,13 @@ export interface Npc {
 // ============================================
 
 export interface Hook {
+  id?: string;
   title: string;
   description: string;
   type: HookType;
   character_index?: number;
+  template_id?: string;
+  metadata?: Record<string, string>;
 }
 
 // ============================================
@@ -257,6 +266,12 @@ export interface SavedCampaignData {
   viewer_character_index?: number;
   invites?: Invite[];
   my_notes?: Record<string, string>;
+  map_image_url?: string | null;
+  terrain_image_url?: string | null;
+  terrain_image_id?: string | null;
+  npc_ids?: string[];
+  location_ids?: string[];
+  faction_ids?: string[];
 }
 
 // ============================================
@@ -318,4 +333,27 @@ export interface CharacterNote {
   character_id: string;
   content: string;
   updated_at: string;
+}
+
+// ============================================
+// Изображения (шаги 50–55)
+// ============================================
+
+export type ImageKind = "portrait" | "npc" | "location" | "map" | "terrain";
+
+export interface PoolImage {
+  id: string;
+  url: string;
+  type: string;
+  race_name: string | null;
+  location_type: string | null;
+  theme: string;
+  width: number;
+  height: number;
+}
+
+export interface ResolvedImage {
+  url: string | null;
+  width: number;
+  height: number;
 }

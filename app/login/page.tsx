@@ -8,18 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/lib/hooks/useToast";
 import { usernameToEmail } from "@/lib/utils/username";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { show } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -28,16 +28,17 @@ export default function LoginPage() {
         password,
       });
       if (signErr) throw signErr;
+      show("success", "Добро пожаловать");
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Неверный логин или пароль");
+      show("error", "Неверный логин или пароль");
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-forge-gold-light">
@@ -55,6 +56,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
+                  required
                 />
               </div>
               <div>
@@ -65,12 +67,11 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
+                  required
                 />
               </div>
 
-              {error && <p className="text-forge-ember text-sm">{error}</p>}
-
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
                 {loading ? "Входим..." : "Войти"}
               </Button>
             </form>

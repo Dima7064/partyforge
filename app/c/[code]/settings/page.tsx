@@ -7,6 +7,7 @@ import { InvitesPanel } from "@/components/campaign/InvitesPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SmartLink } from "@/components/ui/smart-link";
 
 export default async function CampaignSettingsPage({
   params,
@@ -21,13 +22,17 @@ export default async function CampaignSettingsPage({
   if (!campaign) notFound();
   if (campaign.viewer_role !== "master") {
     return (
-      <main className="min-h-screen p-8 max-w-2xl mx-auto">
+      <main id="main-content" className="min-h-screen p-8 max-w-2xl mx-auto">
         <Card>
           <CardContent className="p-6">
-            <p className="text-forge-muted">Только мастер может настраивать кампанию.</p>
-            <Link href={`/c/${code}`} className="mt-3 inline-block">
-              <Button variant="outline">Назад</Button>
-            </Link>
+            <p className="text-forge-muted">
+              Только мастер может настраивать кампанию.
+            </p>
+            <SmartLink href={`/c/${code}`}>
+              <Button variant="outline" className="mt-3">
+                Назад
+              </Button>
+            </SmartLink>
           </CardContent>
         </Card>
       </main>
@@ -37,17 +42,22 @@ export default async function CampaignSettingsPage({
   const joinUrl = `/join/${code}`;
 
   return (
-    <main className="min-h-screen p-8 max-w-3xl mx-auto space-y-6">
+    <main
+      id="main-content"
+      className="min-h-screen p-8 max-w-3xl mx-auto space-y-6"
+    >
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-forge-muted text-sm uppercase tracking-wider">Настройки</p>
+          <p className="text-forge-muted text-sm uppercase tracking-wider">
+            Настройки
+          </p>
           <h1 className="text-3xl font-bold text-forge-gold-light">
             {campaign.share_code}
           </h1>
         </div>
-        <Link href={`/c/${code}`}>
+        <SmartLink href={`/c/${code}`}>
           <Button variant="outline">К кампании</Button>
-        </Link>
+        </SmartLink>
       </div>
 
       <SettingsForm
@@ -58,7 +68,7 @@ export default async function CampaignSettingsPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Приглашение по ссылке</CardTitle>
+          <CardTitle>Приглашение</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-forge-muted text-sm">
@@ -69,10 +79,50 @@ export default async function CampaignSettingsPage({
             <code className="text-forge-parchment bg-forge-bg border border-forge-border px-2 py-1 rounded text-sm">
               {joinUrl}
             </code>
-            <Link href={joinUrl}>
-              <Button size="sm" variant="outline">Открыть страницу входа</Button>
-            </Link>
+            <SmartLink href={joinUrl}>
+              <Button size="sm" variant="outline">
+                Открыть страницу входа
+              </Button>
+            </SmartLink>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Участники ({campaign.members.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {campaign.members.map((m) => {
+            const char =
+              m.character_index !== undefined
+                ? campaign.characters[m.character_index]
+                : null;
+            return (
+              <div
+                key={m.user_id}
+                className="flex items-center justify-between border-b border-forge-border pb-2 last:border-0 last:pb-0"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                  <span className="text-forge-parchment font-medium">
+                    {m.username || m.user_id.slice(0, 8)}
+                  </span>
+                  {char ? (
+                    <span className="text-forge-muted text-xs sm:text-sm">
+                      играет за {char.name}
+                    </span>
+                  ) : (
+                    <span className="text-forge-muted text-xs sm:text-sm">
+                      управляет миром
+                    </span>
+                  )}
+                </div>
+                <Badge variant={m.role === "master" ? "gold" : "muted"}>
+                  {m.role === "master" ? "Мастер" : "Игрок"}
+                </Badge>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -80,24 +130,6 @@ export default async function CampaignSettingsPage({
         campaignCode={code}
         initialInvites={campaign.invites ?? []}
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Участники ({campaign.members.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {campaign.members.map((m) => (
-            <div key={m.user_id} className="flex items-center justify-between">
-              <span className="text-forge-parchment">
-                {m.username || m.user_id.slice(0, 8)}
-              </span>
-              <Badge variant={m.role === "master" ? "gold" : "muted"}>
-                {m.role === "master" ? "Мастер" : "Игрок"}
-              </Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </main>
   );
 }

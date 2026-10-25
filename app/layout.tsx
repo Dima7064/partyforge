@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Cinzel, Inter } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
+import { SkipLink } from "@/components/ui/skip-link";
 
 const cinzel = Cinzel({
   variable: "--font-cinzel",
@@ -29,7 +31,8 @@ export default function RootLayout({
       <body
         className={`${cinzel.variable} ${inter.variable} antialiased min-h-screen bg-stone-950 text-stone-100`}
       >
-        {children}
+        <SkipLink />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

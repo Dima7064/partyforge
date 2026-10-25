@@ -51,7 +51,7 @@ export function InvitesPanel({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Отозвать приглашение? По этой ссылке больше нельзя будет зайти.")) return;
+    if (!confirm("Отозвать приглашение?")) return;
     try {
       await fetch(`/api/campaigns/${campaignCode}/invites/${id}`, {
         method: "DELETE",
@@ -67,23 +67,20 @@ export function InvitesPanel({
     <Card>
       <CardHeader>
         <CardTitle>Приглашения</CardTitle>
-        <p className="text-xs text-forge-muted">
-          Создавай уникальные коды для своих друзей с ограничениями.
-        </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-3 gap-3 items-end">
-          <div>
+        <div className="flex flex-col md:flex-row gap-3 items-end">
+          <div className="w-full md:w-1/3">
             <Label>Роль</Label>
             <Select
               value={role}
               onChange={(e) => setRole(e.target.value as "player" | "master")}
             >
-              <option value="player">Игрок (видит только своего героя)</option>
-              <option value="master">Мастер (видит всё)</option>
+              <option value="player">Игрок</option>
+              <option value="master">Мастер</option>
             </Select>
           </div>
-          <div>
+          <div className="w-full md:w-1/3">
             <Label>Лимит использований</Label>
             <Input
               type="number"
@@ -92,19 +89,22 @@ export function InvitesPanel({
               onChange={(e) => setMaxUses(e.target.value)}
               placeholder="без лимита"
             />
-            <p className="text-[10px] text-forge-muted mt-1">
-              Сколько раз можно применить код. Пусто — бесконечно.
-            </p>
           </div>
-          <Button onClick={handleCreate} disabled={creating} className="mb-[22px]">
-            {creating ? "Создаём..." : "Создать ссылку"}
-          </Button>
+          <div className="w-full md:w-auto">
+            <Button
+              onClick={handleCreate}
+              disabled={creating}
+              className="w-full md:w-auto"
+            >
+              {creating ? "Создаём..." : "Создать ссылку"}
+            </Button>
+          </div>
         </div>
 
         {error && <p className="text-forge-ember text-sm">{error}</p>}
 
         {invites.length === 0 ? (
-          <p className="text-forge-muted text-sm">Пока нет созданных приглашений.</p>
+          <p className="text-forge-muted text-sm">Пока нет приглашений.</p>
         ) : (
           <div className="space-y-2">
             {invites.map((inv) => (

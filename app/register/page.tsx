@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/lib/hooks/useToast";
 import {
   validatePassword,
   validateUsername,
@@ -16,19 +17,17 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { show } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-
     const uErr = validateUsername(username);
-    if (uErr) { setError(uErr); return; }
+    if (uErr) { show("error", uErr); return; }
     const pErr = validatePassword(password);
-    if (pErr) { setError(pErr); return; }
+    if (pErr) { show("error", pErr); return; }
 
     setLoading(true);
     try {
@@ -49,16 +48,17 @@ export default function RegisterPage() {
         throw new Error(err.error ?? "Не удалось создать профиль");
       }
 
+      show("success", "Аккаунт создан");
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка регистрации");
+      show("error", err instanceof Error ? err.message : "Ошибка регистрации");
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-forge-gold-light">
@@ -80,6 +80,7 @@ export default function RegisterPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="dovahkiin"
                   autoComplete="username"
+                  required
                 />
               </div>
               <div>
@@ -91,12 +92,11 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="мин. 8 символов"
                   autoComplete="new-password"
+                  required
                 />
               </div>
 
-              {error && <p className="text-forge-ember text-sm">{error}</p>}
-
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
                 {loading ? "Создаём..." : "Зарегистрироваться"}
               </Button>
             </form>

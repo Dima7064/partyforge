@@ -13,6 +13,11 @@ const TYPE_LABEL_RU: Record<string, string> = {
   combat: "Бой",
 };
 
+interface FillResult {
+  text: string;
+  metadata: Record<string, string>;
+}
+
 export function generateHooks(
   partial: Omit<Campaign, "hooks">,
   templates: HookTemplateRow[],
@@ -26,29 +31,53 @@ export function generateHooks(
 
   for (let i = 0; i < partial.characters.length; i++) {
     const char = partial.characters[i];
-    const template = pickTemplate(templates, partial.input.tone, usedTemplates, rng);
+    const template = pickTemplate(
+      templates,
+      partial.input.tone,
+      usedTemplates,
+      rng,
+    );
     if (!template) break;
     usedTemplates.add(template.id);
 
-    const description = fillTemplate(template.template, char, partial, rng);
+    const { text, metadata } = fillTemplate(
+      template.template,
+      char,
+      partial,
+      rng,
+    );
     hooks.push({
-      title: `${char.name}: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`, // <--- Перевели
-      description,
+      title: `${char.name}: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`,
+      description: text,
       type: template.type,
       character_index: i,
+      template_id: template.id,
+      metadata,
     });
   }
 
   if (hooks.length < 5 && partial.characters.length > 0) {
-    const template = pickTemplate(templates, partial.input.tone, usedTemplates, rng);
+    const template = pickTemplate(
+      templates,
+      partial.input.tone,
+      usedTemplates,
+      rng,
+    );
     if (template) {
       const char = partial.characters[0];
-      const description = fillTemplate(template.template, char, partial, rng);
+      const { text, metadata } = fillTemplate(
+        template.template,
+        char,
+        partial,
+        rng,
+      );
       hooks.push({
-        title: `Партия: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`, // <--- Перевели
-        description,
+        title: `Партия: ${TYPE_LABEL_RU[template.type] ?? "Событие"}`,
+        description: text,
         type: template.type,
         character_index: 0,
+        template_id: template.id,
+        metadata,
       });
     }
   }
@@ -75,22 +104,36 @@ function fillTemplate(
   character: Character,
   partial: Omit<Campaign, "hooks">,
   rng: Rng,
-): string {
+): FillResult {
+  const metadata: Record<string, string> = { character: character.name };
+
+  function pickOrGet(
+    key: "npc" | "faction" | "location",
+    pool: { name: string }[],
+    fallback: string,
+  ): string {
+    if (metadata[key]) return metadata[key];
+    const value =
+      pool.length > 0
+        ? pool[Math.floor(rng() * pool.length)].name
+        : fallback;
+    metadata[key] = value;
+    return value;
+  }
+
   let result = template;
   result = result.replace(/{character}/g, character.name);
-  result = result.replace(/{npc}/g, () => {
-    const arr = partial.npcs;
-    return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "незнакомец";
-  });
-  result = result.replace(/{faction}/g, () => {
-    const arr = partial.factions;
-    return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "неизвестная фракция";
-  });
-  result = result.replace(/{location}/g, () => {
-    const arr = partial.locations;
-    return arr.length > 0 ? arr[Math.floor(rng() * arr.length)].name : "неизвестное место";
-  });
-  return result;
+  result = result.replace(/{npc}/g, () =>
+    pickOrGet("npc", partial.npcs, "незнакомец"),
+  );
+  result = result.replace(/{faction}/g, () =>
+    pickOrGet("faction", partial.factions, "неизвестная фракция"),
+  );
+  result = result.replace(/{location}/g, () =>
+    pickOrGet("location", partial.locations, "неизвестное место"),
+  );
+
+  return { text: result, metadata };
 }
 
 export function validateHooks(

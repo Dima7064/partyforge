@@ -16,8 +16,67 @@ import type {
 } from "@/types/generator";
 import { generateShareCode } from "@/lib/campaigns/shareCode";
 import { unlockAchievement } from "@/lib/db/achievements";
+import { getRandomPoolImage } from "@/lib/db/images";
 
 const MAX_CODE_ATTEMPTS = 5;
+
+// ============================================
+// Предустановленные данные для редактирования (Скайрим)
+// ============================================
+const SKYRIM_LOCATIONS_PRESETS = [
+  { name: "Вайтран", type: "city", description: "Город у подножия Драконьего моста, окружённый равнинами." },
+  { name: "Солитьюд", type: "city", description: "Столица Скайрима, обитель Империи и Высокого короля." },
+  { name: "Виндхельм", type: "city", description: "Северный город, где чтят старые традиции и Нордов." },
+  { name: "Рифтен", type: "city", description: "Город воров, погрязший в коррупции и тенях." },
+  { name: "Маркарт", type: "city", description: "Город серебряных рудников и клана Серебряной Крови." },
+  { name: "Драконий предел", type: "ruins", description: "Древние руины, полные драугров и ловушек." },
+  { name: "Лабиринт Шалидора", type: "ruins", description: "Лабиринт древнего мага Шалидора, скрывающий тайны." },
+  { name: "Альфтанд", type: "ruins", description: "Подземелья, где спят мертвые." },
+  { name: "Мзулфт", type: "ruins", description: "Гномьи руины с работающими механизмами." },
+  { name: "Храм Небесной Гавани", type: "temple", description: "Величественный храм в Солитьюде." },
+  { name: "Святилище Азуры", type: "temple", description: "Святилище даэдра, скрытое в горах." },
+  { name: "Храм Мары", type: "temple", description: "Храм богини любви и семьи." },
+  { name: "Храм Девяти", type: "temple", description: "Главный храм в Вайтране, где молятся Девяти." },
+  { name: "Сумрачный лес", type: "wild", description: "Лес, где обитают тролли и волки." },
+  { name: "Тундра Вайтрана", type: "wild", description: "Бескрайние равнины, где часто летают драконы." },
+  { name: "Болото Хьялмарк", type: "wild", description: "Опасные топи, кишащие монстрами." },
+  { name: "Глотка мира", type: "wild", description: "Древнее горное ущелье, ведущее к Драконьему Пределу." },
+];
+
+const SKYRIM_FACTIONS_PRESETS = [
+  { name: "Соратники", goals: "Защищать Скайрим и чтить традиции предков.", description: "Древний орден воинов, обитающий в Йоррваскре." },
+  { name: "Среброрукие", goals: "Уничтожить Соратников и захватить власть.", description: "Кровожадные наёмники, враждующие с Йоррваскром." },
+  { name: "Талмор", goals: "Установить господство эльфов и запретить Талос.", description: "Шпионы и агенты Доминиона." },
+  { name: "Гильдия Воров", goals: "Вернуть былое влияние в Рифтене.", description: "Воры, скупщики краденого и мастера скрытности." },
+  { name: "Тёмное Братство", goals: "Служить Матери Ночи и исполнять контракты.", description: "Тайное общество ассасинов." },
+  { name: "Империя", goals: "Сохранить контроль над Скайримом любой ценой.", description: "Легионеры и сторонники Империи." },
+  { name: "Братья Бури", goals: "Освободить Скайрим от Империи.", description: "Мятежники, ведомые Ульфриком Буревестником." },
+];
+
+const SKYRIM_NPCS_PRESETS = [
+  { name: "Свен", description: "Сын трактирщика из Ривервуда, мечтающий о приключениях." },
+  { name: "Ралор", description: "Старый воин, потерявший жену и ушедший в затворничество." },
+  { name: "Хульда", description: "Хозяйка таверны в Вайтране, знающая все городские сплетни." },
+  { name: "Белетор", description: "Кузнец в Вайтране, мечтающий выковать легендарный клинок." },
+  { name: "Йорлунд", description: "Скальд, поющий песни о древних героях." },
+  { name: "Астрид", description: "Лидер Тёмного Братства, скрывающаяся в своём убежище." },
+  { name: "Дельфина", description: "Бывший клинок, ныне тайно служащая делу борьбы с драконами." },
+  { name: "Арнгейр", description: "Последний клинок, живущий в уединении в горах." },
+  { name: "Фаренгар", description: "Придворный маг ярла Вайтрана, увлечённый исследованиями." },
+  { name: "Нирья", description: "Целительница из Вайтрана, уставшая от бесконечных ран." },
+  { name: "Клавикус Вайл", description: "Даэдрический принц, предлагающий сделки с непредсказуемыми последствиями." },
+  { name: "Люсьен Лашанс", description: "Дерзкий ученик Тёмного Братства." },
+  { name: "Балгруф", description: "Ярл Вайтрана, мудрый и справедливый правитель." },
+  { name: "Ирилет", description: "Служанка ярла, мечтающая о свободе." },
+  { name: "Ульфрик Буревестник", description: "Лидер Братьев Бури, стремящийся освободить Скайрим." },
+  { name: "Галмар", description: "Стражник Виндхельма, преданный Ульфрику." },
+  { name: "Бриньольф", description: "Мастер Гильдии воров в Рифтене, хитрый и обаятельный." },
+  { name: "Мерсер Фрей", description: "Заместитель Бриньольфа, скрывающий тёмную тайну." },
+];
+
+// ============================================
+// Сохранение и загрузка кампании
+// ============================================
 
 export async function saveCampaign(
   input: GeneratorInput,
@@ -27,179 +86,94 @@ export async function saveCampaign(
 ): Promise<{ share_code: string; id: string }> {
   const supabase = createServerClient();
 
+  // ---- 0. Все картинки — параллельно ----
+  const [characterImages, npcImages, locationImages, mapImage, terrainImage] =
+    await Promise.all([
+      Promise.all(
+        campaign.characters.map((c) =>
+          getRandomPoolImage({
+            type: "portrait",
+            race_name: c.race_name,
+            theme: input.theme,
+          }).then((img) => img?.id ?? null),
+        ),
+      ),
+      Promise.all(
+        campaign.npcs.map(() =>
+          getRandomPoolImage({ type: "npc", theme: input.theme }).then(
+            (img) => img?.id ?? null,
+          ),
+        ),
+      ),
+      Promise.all(
+        campaign.locations.map((l) =>
+          getRandomPoolImage({
+            type: "location",
+            location_type: l.type,
+            theme: input.theme,
+          }).then((img) => img?.id ?? null),
+        ),
+      ),
+      getRandomPoolImage({ type: "map", theme: input.theme }),
+      getRandomPoolImage({ type: "terrain", theme: input.theme }),
+    ]);
+
+  const imageIdsPayload = {
+    character_images: characterImages,
+    npc_images: npcImages,
+    location_images: locationImages,
+    map_image: mapImage?.id ?? null,
+    terrain_image: terrainImage?.id ?? null,
+  };
+
+  // ---- 1. RPC: вся вставка в одной транзакции ----
   let share_code = "";
   let campaignId = "";
   let inserted = false;
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
     share_code = generateShareCode();
-    const { data, error } = await supabase
-      .from("campaigns")
-      .insert({
-        share_code,
-        user_id: userId,
-        title: title || `Кампания ${share_code}`,
-        system: input.system,
-        level: input.level,
-        tone: input.tone,
-        theme: input.theme,
-        party_size: input.party_size,
-        world: input.world,
-        constraints: input.constraints,
-        duration: input.duration,
-        situation: campaign.situation,
-      })
-      .select("id, share_code")
-      .single();
+
+    const { data, error } = await supabase.rpc("save_campaign_atomic", {
+      p_user_id: userId,
+      p_share_code: share_code,
+      p_title: title || `Кампания ${share_code}`,
+      p_input: input,
+      p_campaign: campaign,
+      p_image_ids: imageIdsPayload,
+    });
+
     if (error) {
+      // 23505 = unique_violation на share_code → пробуем другой код
       if (error.code === "23505") continue;
       throw error;
     }
-    campaignId = data.id;
+
+    campaignId = data.campaign_id;
     inserted = true;
     break;
   }
-  if (!inserted) throw new Error("Не удалось создать share_code");
 
-  // 1. Увеличиваем вечную статистику (созданные кампании)
-  const { data: stats } = await supabase
-    .from("user_stats")
-    .select("campaigns_created")
-    .eq("user_id", userId)
-    .maybeSingle();
-  
-  if (!stats) {
-    await supabase.from("user_stats").insert({ user_id: userId, campaigns_created: 1 });
-  } else {
-    await supabase.from("user_stats").update({ campaigns_created: stats.campaigns_created + 1 }).eq("user_id", userId);
+  if (!inserted) {
+    throw new Error("Не удалось создать share_code");
   }
 
-  // 2. Добавляем мастера в участники
-  await supabase.from("campaign_members").insert({
-    campaign_id: campaignId,
-    user_id: userId,
-    role: "master",
-  });
-
-  // 3. Сохраняем персонажей
-  const characterRows = campaign.characters.map((c) => ({
-    campaign_id: campaignId,
-    name: c.name,
-    class_name: c.class_name,
-    race_name: c.race_name,
-    background_name: c.background_name,
-    level: c.level,
-    role: c.role,
-    abilities: c.abilities,
-    personality: c.personality,
-    backstory: c.backstory,
-    secret_text: c.secret_text,
-  }));
-  const { data: insertedChars, error: charsErr } = await supabase
-    .from("characters")
-    .insert(characterRows)
-    .select("id");
-  if (charsErr) throw charsErr;
-  const charIds = (insertedChars ?? []).map((r) => r.id);
-
-  // 4. Сохраняем историю персонажей (для графиков в профиле)
-  const historyRows = campaign.characters.map((c) => ({
-    user_id: userId,
-    class_name: c.class_name,
-    race_name: c.race_name,
-    role: c.role,
-  }));
-  await supabase.from("user_character_history").insert(historyRows);
-
-  // 5. Сохраняем связи
-  if (campaign.relationships.length > 0) {
-    const relRows = campaign.relationships.map((r) => ({
-      campaign_id: campaignId,
-      source_character_id: charIds[r.source_character_index],
-      target_character_id: charIds[r.target_character_index],
-      type: r.type,
-      description: r.description,
-    }));
-    const { error } = await supabase.from("relationships").insert(relRows);
-    if (error) throw error;
-  }
-
-  // 6. Сохраняем локации
-  const locationRows = campaign.locations.map((l) => ({
-    campaign_id: campaignId,
-    name: l.name,
-    type: l.type,
-    description: l.description,
-  }));
-  const { data: insertedLocs, error: locErr } = await supabase
-    .from("locations")
-    .insert(locationRows)
-    .select("id");
-  if (locErr) throw locErr;
-  const locIds = (insertedLocs ?? []).map((r) => r.id);
-
-  if (campaign.character_locations.length > 0) {
-    const clRows = campaign.character_locations.map((cl) => ({
-      campaign_id: campaignId,
-      character_id: charIds[cl.character_index],
-      location_id: locIds[cl.location_index],
-      connection_type: cl.connection_type,
-    }));
-    const { error } = await supabase.from("character_locations").insert(clRows);
-    if (error) throw error;
-  }
-
-  // 7. Сохраняем фракции
-  const factionRows = campaign.factions.map((f) => ({
-    campaign_id: campaignId,
-    name: f.name,
-    goals: f.goals,
-    attitude: f.attitude,
-    description: f.description,
-  }));
-  const { data: insertedFacts, error: factErr } = await supabase
-    .from("factions")
-    .insert(factionRows)
-    .select("id");
-  if (factErr) throw factErr;
-  const factIds = (insertedFacts ?? []).map((r) => r.id);
-
-  // 8. Сохраняем NPC
-  if (campaign.npcs.length > 0) {
-    const npcRows = campaign.npcs.map((n) => ({
-      campaign_id: campaignId,
-      name: n.name,
-      role: n.role,
-      description: n.description,
-      location_id: n.location_index !== undefined ? locIds[n.location_index] : null,
-      faction_id: n.faction_index !== undefined ? factIds[n.faction_index] : null,
-    }));
-    const { error } = await supabase.from("npcs").insert(npcRows);
-    if (error) throw error;
-  }
-
-  // 9. Сохраняем крючки
-  if (campaign.hooks.length > 0) {
-    const hookRows = campaign.hooks.map((h) => ({
-      campaign_id: campaignId,
-      title: h.title,
-      description: h.description,
-      type: h.type,
-      character_id: h.character_index !== undefined ? charIds[h.character_index] : null,
-    }));
-    const { error } = await supabase.from("hooks").insert(hookRows);
-    if (error) throw error;
-  }
-
-  // 10. Проверяем достижения
+  // ---- 2. Достижения (вне транзакции, не критично) ----
   const { count } = await supabase
     .from("campaign_members")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("role", "master");
-  if ((count ?? 0) >= 1) await unlockAchievement(userId, "first_campaign");
-  if ((count ?? 0) >= 10) await unlockAchievement(userId, "ten_campaigns");
-  if (input.theme === "skyrim") await unlockAchievement(userId, "skyrim_master");
+
+  const achievementChecks: Promise<void>[] = [];
+  if ((count ?? 0) >= 1)
+    achievementChecks.push(unlockAchievement(userId, "first_campaign"));
+  if ((count ?? 0) >= 10)
+    achievementChecks.push(unlockAchievement(userId, "ten_campaigns"));
+  if (input.theme === "skyrim")
+    achievementChecks.push(unlockAchievement(userId, "skyrim_master"));
+
+  await Promise.all(achievementChecks);
 
   return { share_code, id: campaignId };
 }
@@ -220,20 +194,51 @@ export async function getCampaignByCode(
 
   const campaignId = campaign.id;
 
-  const [charsRes, relsRes, locsRes, clRes, factsRes, npcsRes, hooksRes, membersRes] =
-    await Promise.all([
-      supabase.from("characters").select("*").eq("campaign_id", campaignId).order("created_at"),
-      supabase.from("relationships").select("*").eq("campaign_id", campaignId),
-      supabase.from("locations").select("*").eq("campaign_id", campaignId).order("created_at"),
-      supabase.from("character_locations").select("*").eq("campaign_id", campaignId),
-      supabase.from("factions").select("*").eq("campaign_id", campaignId).order("created_at"),
-      supabase.from("npcs").select("*").eq("campaign_id", campaignId).order("created_at"),
-      supabase.from("hooks").select("*").eq("campaign_id", campaignId).order("created_at"),
-      supabase
-        .from("campaign_members")
-        .select("user_id, role, character_id, profiles(username)")
-        .eq("campaign_id", campaignId),
-    ]);
+  const [
+    charsRes,
+    relsRes,
+    locsRes,
+    clRes,
+    factsRes,
+    npcsRes,
+    hooksRes,
+    membersRes,
+  ] = await Promise.all([
+    supabase
+      .from("characters")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at"),
+    supabase.from("relationships").select("*").eq("campaign_id", campaignId),
+    supabase
+      .from("locations")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at"),
+    supabase
+      .from("character_locations")
+      .select("*")
+      .eq("campaign_id", campaignId),
+    supabase
+      .from("factions")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at"),
+    supabase
+      .from("npcs")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at"),
+    supabase
+      .from("hooks")
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("created_at"),
+    supabase
+      .from("campaign_members")
+      .select("user_id, role, character_id, profiles(username)")
+      .eq("campaign_id", campaignId),
+  ]);
 
   if (charsRes.error) throw charsRes.error;
   if (relsRes.error) throw relsRes.error;
@@ -247,6 +252,7 @@ export async function getCampaignByCode(
   const chars = charsRes.data ?? [];
   const locs = locsRes.data ?? [];
   const facts = factsRes.data ?? [];
+  const npcRows = npcsRes.data ?? [];
 
   const charIdToIndex = new Map<string, number>();
   chars.forEach((c, i) => charIdToIndex.set(c.id, i));
@@ -255,33 +261,69 @@ export async function getCampaignByCode(
   const factIdToIndex = new Map<string, number>();
   facts.forEach((f, i) => factIdToIndex.set(f.id, i));
 
+  const allImageIds = new Set<string>();
+  for (const c of chars) if (c.image_id) allImageIds.add(c.image_id);
+  for (const l of locs) if (l.image_id) allImageIds.add(l.image_id);
+  for (const n of npcRows) if (n.image_id) allImageIds.add(n.image_id);
+  if (campaign.map_image_id) allImageIds.add(campaign.map_image_id);
+  if (campaign.terrain_image_id) allImageIds.add(campaign.terrain_image_id);
+
+  const imageMap = new Map<
+    string,
+    { url: string; width: number; height: number }
+  >();
+  if (allImageIds.size > 0) {
+    const { data: imgs } = await supabase
+      .from("images")
+      .select("id, url, width, height")
+      .in("id", Array.from(allImageIds));
+    for (const img of imgs ?? []) {
+      imageMap.set(img.id, {
+        url: img.url,
+        width: img.width,
+        height: img.height,
+      });
+    }
+  }
+
   const viewerRole: "master" | "player" | "none" = !viewerUserId
     ? "none"
-    : (membersRes.data ?? []).some((m) => m.user_id === viewerUserId && m.role === "master")
+    : (membersRes.data ?? []).some(
+        (m) => m.user_id === viewerUserId && m.role === "master",
+      )
     ? "master"
-    : (membersRes.data ?? []).some((m) => m.user_id === viewerUserId && m.role === "player")
+    : (membersRes.data ?? []).some(
+        (m) => m.user_id === viewerUserId && m.role === "player",
+      )
     ? "player"
     : "none";
 
   const viewerMember = viewerUserId
     ? (membersRes.data ?? []).find((m) => m.user_id === viewerUserId)
     : undefined;
-  const viewerCharacterIndex =
-    viewerMember?.character_id ? charIdToIndex.get(viewerMember.character_id) : undefined;
+  const viewerCharacterIndex = viewerMember?.character_id
+    ? charIdToIndex.get(viewerMember.character_id)
+    : undefined;
 
-  const characters: Character[] = chars.map((c) => ({
-    id: c.id,
-    name: c.name,
-    class_name: c.class_name,
-    race_name: c.race_name,
-    background_name: c.background_name,
-    level: c.level,
-    role: c.role,
-    abilities: c.abilities,
-    personality: c.personality,
-    backstory: c.backstory,
-    secret_text: c.secret_text,
-  }));
+  const characters: Character[] = chars.map((c) => {
+    const img = c.image_id ? imageMap.get(c.image_id) : undefined;
+    return {
+      id: c.id,
+      name: c.name,
+      class_name: c.class_name,
+      race_name: c.race_name,
+      background_name: c.background_name,
+      level: c.level,
+      role: c.role,
+      abilities: c.abilities,
+      personality: c.personality,
+      backstory: c.backstory,
+      secret_text: c.secret_text,
+      image_url: img?.url ?? null,
+      image_width: img?.width,
+      image_height: img?.height,
+    };
+  });
 
   const relationships: Relationship[] = (relsRes.data ?? []).map((r) => ({
     source_character_index: charIdToIndex.get(r.source_character_id) ?? 0,
@@ -290,17 +332,25 @@ export async function getCampaignByCode(
     description: r.description,
   }));
 
-  const locations: Location[] = locs.map((l) => ({
-    name: l.name,
-    type: l.type,
-    description: l.description,
-  }));
+  const locations: Location[] = locs.map((l) => {
+    const img = l.image_id ? imageMap.get(l.image_id) : undefined;
+    return {
+      name: l.name,
+      type: l.type,
+      description: l.description,
+      image_url: img?.url ?? null,
+      image_width: img?.width,
+      image_height: img?.height,
+    };
+  });
 
-  const character_locations: CharacterLocation[] = (clRes.data ?? []).map((cl) => ({
-    character_index: charIdToIndex.get(cl.character_id) ?? 0,
-    location_index: locIdToIndex.get(cl.location_id) ?? 0,
-    connection_type: cl.connection_type,
-  }));
+  const character_locations: CharacterLocation[] = (clRes.data ?? []).map(
+    (cl) => ({
+      character_index: charIdToIndex.get(cl.character_id) ?? 0,
+      location_index: locIdToIndex.get(cl.location_id) ?? 0,
+      connection_type: cl.connection_type,
+    }),
+  );
 
   const factions: Faction[] = facts.map((f) => ({
     name: f.name,
@@ -309,21 +359,28 @@ export async function getCampaignByCode(
     description: f.description,
   }));
 
-  const npcs: Npc[] = (npcsRes.data ?? []).map((n) => ({
-    name: n.name,
-    role: n.role,
-    description: n.description,
-    location_index:
-      n.location_id && locIdToIndex.has(n.location_id)
-        ? locIdToIndex.get(n.location_id)
-        : undefined,
-    faction_index:
-      n.faction_id && factIdToIndex.has(n.faction_id)
-        ? factIdToIndex.get(n.faction_id)
-        : undefined,
-  }));
+  const npcs: Npc[] = npcRows.map((n) => {
+    const img = n.image_id ? imageMap.get(n.image_id) : undefined;
+    return {
+      name: n.name,
+      role: n.role,
+      description: n.description,
+      location_index:
+        n.location_id && locIdToIndex.has(n.location_id)
+          ? locIdToIndex.get(n.location_id)
+          : undefined,
+      faction_index:
+        n.faction_id && factIdToIndex.has(n.faction_id)
+          ? factIdToIndex.get(n.faction_id)
+          : undefined,
+      image_url: img?.url ?? null,
+      image_width: img?.width,
+      image_height: img?.height,
+    };
+  });
 
   const hooks: Hook[] = (hooksRes.data ?? []).map((h) => ({
+    id: h.id,
     title: h.title,
     description: h.description,
     type: h.type,
@@ -331,6 +388,8 @@ export async function getCampaignByCode(
       h.character_id && charIdToIndex.has(h.character_id)
         ? charIdToIndex.get(h.character_id)
         : undefined,
+    template_id: h.template_id ?? undefined,
+    metadata: h.metadata ?? {},
   }));
 
   const members: CampaignMember[] = (membersRes.data ?? []).map((m) => {
@@ -340,7 +399,9 @@ export async function getCampaignByCode(
       username: p?.username ?? "",
       role: m.role,
       character_id: m.character_id ?? undefined,
-      character_index: m.character_id ? charIdToIndex.get(m.character_id) : undefined,
+      character_index: m.character_id
+        ? charIdToIndex.get(m.character_id)
+        : undefined,
     };
   });
 
@@ -372,6 +433,13 @@ export async function getCampaignByCode(
     }
   }
 
+  const mapImg = campaign.map_image_id
+    ? imageMap.get(campaign.map_image_id)
+    : undefined;
+  const terrainImg = campaign.terrain_image_id
+    ? imageMap.get(campaign.terrain_image_id)
+    : undefined;
+
   return {
     id: campaignId,
     share_code: campaign.share_code,
@@ -401,8 +469,18 @@ export async function getCampaignByCode(
     viewer_character_index: viewerCharacterIndex,
     invites,
     my_notes,
+    map_image_url: mapImg?.url ?? null,
+    terrain_image_url: terrainImg?.url ?? null,
+    terrain_image_id: campaign.terrain_image_id ?? null,
+    npc_ids: npcRows.map((n) => n.id),
+    location_ids: locs.map((l) => l.id),
+    faction_ids: facts.map((f) => f.id),
   };
 }
+
+// ============================================
+// Управление кампанией
+// ============================================
 
 export async function deleteCampaignByCode(
   code: string,
@@ -489,7 +567,11 @@ export async function joinCampaign(
   if (existing) throw new Error("Уже участник");
 
   let characterId: string | null = null;
-  let characterInfo: { class_name: string; race_name: string; role: string } | null = null;
+  let characterInfo: {
+    class_name: string;
+    race_name: string;
+    role: string;
+  } | null = null;
 
   if (role === "player") {
     const { data: chars } = await supabase
@@ -519,17 +601,21 @@ export async function joinCampaign(
       .eq("id", invite.id);
   }
 
-  // ВЕЧНАЯ СТАТИСТИКА (присоединился)
   const { data: stats } = await supabase
     .from("user_stats")
     .select("campaigns_joined")
     .eq("user_id", userId)
     .maybeSingle();
-  
+
   if (!stats) {
-    await supabase.from("user_stats").insert({ user_id: userId, campaigns_joined: 1 });
+    await supabase
+      .from("user_stats")
+      .insert({ user_id: userId, campaigns_joined: 1 });
   } else {
-    await supabase.from("user_stats").update({ campaigns_joined: stats.campaigns_joined + 1 }).eq("user_id", userId);
+    await supabase
+      .from("user_stats")
+      .update({ campaigns_joined: stats.campaigns_joined + 1 })
+      .eq("user_id", userId);
   }
 
   if (characterInfo) {
@@ -551,6 +637,10 @@ export async function joinCampaign(
 
   return { ok: true };
 }
+
+// ============================================
+// Редактирование персонажа и связей
+// ============================================
 
 export async function updateCharacter(
   characterId: string,
@@ -619,9 +709,11 @@ export async function updateCharacter(
   if (updates.name !== undefined) patch.name = updates.name;
   if (updates.class_name !== undefined) patch.class_name = updates.class_name;
   if (updates.race_name !== undefined) patch.race_name = updates.race_name;
-  if (updates.background_name !== undefined) patch.background_name = updates.background_name;
+  if (updates.background_name !== undefined)
+    patch.background_name = updates.background_name;
   if (updates.abilities !== undefined) patch.abilities = updates.abilities;
-  if (updates.personality !== undefined) patch.personality = updates.personality;
+  if (updates.personality !== undefined)
+    patch.personality = updates.personality;
   if (updates.backstory !== undefined) patch.backstory = updates.backstory;
 
   if (Object.keys(patch).length === 0) return;
@@ -655,7 +747,8 @@ export async function updateRelationshipType(
     .eq("campaign_id", rel.campaign_id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (member?.role !== "master") throw new Error("Только мастер может менять связи");
+  if (member?.role !== "master")
+    throw new Error("Только мастер может менять связи");
 
   const { error } = await supabase
     .from("relationships")
@@ -664,10 +757,18 @@ export async function updateRelationshipType(
   if (error) throw error;
 }
 
+// ============================================
+// Приглашения
+// ============================================
+
 export async function createInvite(
   campaignCode: string,
   userId: string,
-  options: { role: "player" | "master"; expiresInHours?: number; maxUses?: number },
+  options: {
+    role: "player" | "master";
+    expiresInHours?: number;
+    maxUses?: number;
+  },
 ): Promise<Invite> {
   const supabase = createServerClient();
 
@@ -677,11 +778,14 @@ export async function createInvite(
     .eq("share_code", campaignCode)
     .maybeSingle();
   if (!campaign) throw new Error("Кампания не найдена");
-  if (campaign.user_id !== userId) throw new Error("Только мастер может приглашать");
+  if (campaign.user_id !== userId)
+    throw new Error("Только мастер может приглашать");
 
   const code = generateShareCode();
   const expires_at = options.expiresInHours
-    ? new Date(Date.now() + options.expiresInHours * 3600 * 1000).toISOString()
+    ? new Date(
+        Date.now() + options.expiresInHours * 3600 * 1000,
+      ).toISOString()
     : null;
 
   const { data, error } = await supabase
@@ -712,7 +816,8 @@ export async function getInvites(
     .eq("share_code", campaignCode)
     .maybeSingle();
   if (!campaign) throw new Error("Кампания не найдена");
-  if (campaign.user_id !== userId) throw new Error("Только мастер видит приглашения");
+  if (campaign.user_id !== userId)
+    throw new Error("Только мастер видит приглашения");
 
   const { data } = await supabase
     .from("invites")
@@ -752,6 +857,10 @@ export async function findInviteByCode(
   if (!data) return null;
   return { invite: data, campaign_id: data.campaign_id };
 }
+
+// ============================================
+// Заметки и выход
+// ============================================
 
 export async function getNote(
   characterId: string,
@@ -806,7 +915,9 @@ export async function leaveCampaign(
 
   if (!member) throw new Error("Ты не участник этой кампании");
   if (member.role === "master") {
-    throw new Error("Мастер не может просто покинуть кампанию. Ты можешь её удалить.");
+    throw new Error(
+      "Мастер не может просто покинуть кампанию. Ты можешь её удалить.",
+    );
   }
 
   const { error } = await supabase
@@ -817,5 +928,229 @@ export async function leaveCampaign(
     .eq("role", "player");
 
   if (error) throw error;
-  // Статистика в user_stats и user_character_history НЕ удаляется.
+}
+
+// ============================================
+// Изображения персонажей
+// ============================================
+
+export async function changeCharacterImage(
+  characterId: string,
+  userId: string,
+  imageId: string,
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const { data: char } = await supabase
+    .from("characters")
+    .select("id, campaign_id")
+    .eq("id", characterId)
+    .maybeSingle();
+  if (!char) throw new Error("Персонаж не найден");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role, character_id")
+    .eq("campaign_id", char.campaign_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const isMaster = member?.role === "master";
+  const isOwner = member?.character_id === characterId;
+  if (!isMaster && !isOwner) throw new Error("Нет доступа");
+
+  const { data: image } = await supabase
+    .from("images")
+    .select("id")
+    .eq("id", imageId)
+    .eq("is_pool", true)
+    .maybeSingle();
+  if (!image) throw new Error("Изображение не найдено в пуле");
+
+  const { error } = await supabase
+    .from("characters")
+    .update({ image_id: imageId })
+    .eq("id", characterId);
+  if (error) throw error;
+}
+
+// ============================================
+// Редактирование мира (Локации, Фракции, NPC, Крючки, Ситуация)
+// ============================================
+
+export async function updateLocation(
+  id: string,
+  userId: string,
+  updates: { name?: string; type?: string; description?: string },
+) {
+  const supabase = createServerClient();
+
+  const { data: loc } = await supabase
+    .from("locations")
+    .select("id, campaign_id")
+    .eq("id", id)
+    .single();
+  if (!loc) throw new Error("Локация не найдена");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", loc.campaign_id)
+    .eq("user_id", userId)
+    .single();
+  if (member?.role !== "master") throw new Error("Только мастер");
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("theme")
+    .eq("id", loc.campaign_id)
+    .single();
+
+  if (campaign?.theme === "skyrim" && updates.name) {
+    const preset = SKYRIM_LOCATIONS_PRESETS.find(
+      (l) => l.name === updates.name,
+    );
+    if (!preset) throw new Error("Такой локации нет в Скайриме");
+    updates.description = preset.description;
+    updates.type = preset.type;
+  }
+
+  const { error } = await supabase
+    .from("locations")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateFaction(
+  id: string,
+  userId: string,
+  updates: { name?: string; goals?: string; description?: string },
+) {
+  const supabase = createServerClient();
+
+  const { data: fact } = await supabase
+    .from("factions")
+    .select("id, campaign_id")
+    .eq("id", id)
+    .single();
+  if (!fact) throw new Error("Фракция не найдена");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", fact.campaign_id)
+    .eq("user_id", userId)
+    .single();
+  if (member?.role !== "master") throw new Error("Только мастер");
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("theme")
+    .eq("id", fact.campaign_id)
+    .single();
+
+  if (campaign?.theme === "skyrim" && updates.name) {
+    const preset = SKYRIM_FACTIONS_PRESETS.find(
+      (f) => f.name === updates.name,
+    );
+    if (!preset) throw new Error("Такой фракции нет в Скайриме");
+    updates.goals = preset.goals;
+    updates.description = preset.description;
+  }
+
+  const { error } = await supabase
+    .from("factions")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateNpc(
+  id: string,
+  userId: string,
+  updates: { name?: string; role?: string; description?: string },
+) {
+  const supabase = createServerClient();
+
+  const { data: npc } = await supabase
+    .from("npcs")
+    .select("id, campaign_id")
+    .eq("id", id)
+    .single();
+  if (!npc) throw new Error("NPC не найден");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", npc.campaign_id)
+    .eq("user_id", userId)
+    .single();
+  if (member?.role !== "master") throw new Error("Только мастер");
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("theme")
+    .eq("id", npc.campaign_id)
+    .single();
+
+  if (campaign?.theme === "skyrim" && updates.name) {
+    const preset = SKYRIM_NPCS_PRESETS.find((n) => n.name === updates.name);
+    if (!preset) throw new Error("Такого NPC нет в Скайриме");
+    updates.description = preset.description;
+  }
+
+  const { error } = await supabase.from("npcs").update(updates).eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateSituation(
+  code: string,
+  userId: string,
+  situation: string,
+): Promise<void> {
+  const supabase = createServerClient();
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, user_id")
+    .eq("share_code", code)
+    .maybeSingle();
+  if (!campaign) throw new Error("Кампания не найдена");
+  if (campaign.user_id !== userId) throw new Error("Только мастер");
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ situation })
+    .eq("id", campaign.id);
+  if (error) throw error;
+}
+
+export async function updateHook(
+  id: string,
+  userId: string,
+  updates: {
+    type?: string;
+    description?: string;
+    template_id?: string | null;
+    metadata?: Record<string, string>;
+  },
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const { data: hook } = await supabase
+    .from("hooks")
+    .select("id, campaign_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!hook) throw new Error("Крючок не найден");
+
+  const { data: member } = await supabase
+    .from("campaign_members")
+    .select("role")
+    .eq("campaign_id", hook.campaign_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (member?.role !== "master") throw new Error("Только мастер");
+
+  const { error } = await supabase.from("hooks").update(updates).eq("id", id);
+  if (error) throw error;
 }

@@ -1,15 +1,15 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CampaignTabs } from "@/components/campaign/CampaignTabs";
 import { LeaveButton } from "@/components/campaign/LeaveButton";
+import { SmartLink } from "@/components/ui/smart-link";
 import { getCampaignByCode } from "@/lib/db/campaigns";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 
 const THEME_LABEL: Record<string, string> = {
   classic: "Классика D&D",
-  skyrim: "Skyrim",
+  skyrim: "Скайрим",
 };
 
 export default async function CampaignPage({
@@ -25,7 +25,10 @@ export default async function CampaignPage({
   if (campaign.viewer_role === "none") redirect(`/join/${code}`);
 
   return (
-    <main className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
+    <main
+      id="main-content"
+      className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto space-y-8"
+    >
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="text-forge-muted text-sm uppercase tracking-[0.2em] mb-1">
@@ -40,13 +43,17 @@ export default async function CampaignPage({
             <Badge variant="muted">
               {campaign.viewer_role === "master" ? "Ты — мастер" : "Ты — игрок"}
             </Badge>
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">На главную</Button>
-            </Link>
+            <SmartLink href="/dashboard">
+              <Button variant="ghost" size="sm">
+                На главную
+              </Button>
+            </SmartLink>
             {campaign.viewer_role === "master" && (
-              <Link href={`/c/${code}/settings`}>
-                <Button variant="ghost" size="sm">Настройки</Button>
-              </Link>
+              <SmartLink href={`/c/${code}/settings`}>
+                <Button variant="ghost" size="sm">
+                  Настройки
+                </Button>
+              </SmartLink>
             )}
             {campaign.viewer_role === "player" && (
               <LeaveButton campaignCode={code} />

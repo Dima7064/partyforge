@@ -18,14 +18,16 @@ describe("generateCampaign", () => {
   it("возвращает все поля", () => {
     const campaign = generateCampaign(baseInput, fixtureData, 42);
     expect(campaign.input).toEqual(baseInput);
-    expect(campaign.characters).toHaveLength(4);
+    // party_size=4 → 1 мастер + 3 игрока
+    expect(campaign.characters).toHaveLength(3);
     expect(campaign.relationships.length).toBeGreaterThan(0);
     expect(campaign.locations).toHaveLength(4);
     expect(campaign.character_locations.length).toBeGreaterThan(0);
     expect(campaign.factions.length).toBeGreaterThanOrEqual(3);
     expect(campaign.npcs.length).toBeGreaterThan(0);
     expect(campaign.situation.length).toBeGreaterThan(0);
-    expect(campaign.hooks.length).toBeGreaterThanOrEqual(4);
+    // hooks = по одному на персонажа + возможно один партийный
+    expect(campaign.hooks.length).toBeGreaterThanOrEqual(3);
   });
 
   it("все персонажи заполнены", () => {
@@ -72,7 +74,8 @@ describe("generateCampaign", () => {
   it("работает с party_size=3", () => {
     const input = { ...baseInput, party_size: 3 };
     const campaign = generateCampaign(input, fixtureData, 42);
-    expect(campaign.characters).toHaveLength(3);
+    // party_size=3 → 1 мастер + 2 игрока
+    expect(campaign.characters).toHaveLength(2);
   });
 
   it("не падает без seed", () => {

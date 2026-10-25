@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import type {
   BackgroundRow,
@@ -10,7 +11,7 @@ import type {
   TraitRow,
 } from "@/types/generator";
 
-export async function loadGeneratorData(): Promise<GeneratorData> {
+async function loadDataUncached(): Promise<GeneratorData> {
   const supabase = createServerClient();
 
   const [classes, races, backgrounds, traits, secrets, hookTemplates, toneWeights] =
@@ -42,3 +43,9 @@ export async function loadGeneratorData(): Promise<GeneratorData> {
     tone_weights: (toneWeights.data ?? []) as ToneWeightRow[],
   };
 }
+
+export const loadGeneratorData = unstable_cache(
+  loadDataUncached,
+  ["generator-data-v1"],
+  { revalidate: 3600, tags: ["catalog"] },
+);

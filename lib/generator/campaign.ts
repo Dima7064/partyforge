@@ -5,13 +5,11 @@ import type {
   Rng,
 } from "@/types/generator";
 import { generateBalancedParty } from "./balance";
-import {
-  generateRelationships,
-  validateRelationships,
-} from "./relationships";
+import { generateRelationships } from "./relationships";
 import { generateWorld } from "./world";
 import { generateHooks } from "./hooks";
 import { mulberry32, seedFromString } from "./random";
+import { validateCampaign } from "@/lib/validation";
 
 export function generateCampaign(
   input: GeneratorInput,
@@ -24,23 +22,30 @@ export function generateCampaign(
       : seed ?? Math.floor(Math.random() * 2 ** 32);
   const rng = mulberry32(numericSeed);
 
-  const characters = generateBalancedParty(input, data, rng);
+  // Кампания на 6 человек = 1 мастер + 5 игроков
+  const playerCount = Math.max(1, input.party_size - 1);
+  const characters = generateBalancedParty(
+    { ...input, party_size: playerCount },
+    data,
+    rng,
+  );
 
   let relationships = generateRelationships(characters, rng);
-  let relCheck = validateRelationships(characters, relationships);
-  let relAttempts = 1;
-  while (!relCheck.valid && relAttempts < 3) {
-    relationships = generateRelationships(characters, rng);
-    relCheck = validateRelationships(characters, relationships);
-    relAttempts++;
-  }
-
-  const world = generateWorld(input, characters, rng);
-
-  const partial: Omit<Campaign, "hooks"> = {
+  let campaign: Campaign = {
     input,
     characters,
     relationships,
+    locations: [],
+    character_locations: [],
+    factions: [],
+    npcs: [],
+    situation: "",
+    hooks: [],
+  };
+
+  const world = generateWorld(input, characters, rng);
+  campaign = {
+    ...campaign,
     locations: world.locations,
     character_locations: world.character_locations,
     factions: world.factions,
@@ -48,7 +53,19 @@ export function generateCampaign(
     situation: world.situation,
   };
 
-  const hooks = generateHooks(partial, data.hook_templates, rng);
+  campaign = {
+    ...campaign,
+    hooks: generateHooks(campaign, data.hook_templates, rng),
+  };
 
-  return { ...partial, hooks };
+  let result = validateCampaign(campaign);
+  let attempts = 1;
+  while (!result.valid && attempts < 3) {
+    relationships = generateRelationships(characters, rng);
+    campaign = { ...campaign, relationships };
+    result = validateCampaign(campaign);
+    attempts++;
+  }
+
+  return campaign;
 }

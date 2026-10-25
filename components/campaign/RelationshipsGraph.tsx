@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReactFlow, {
   Background,
   Controls,
+  useNodesState,
   type Edge,
   type Node,
   type EdgeMouseHandler,
@@ -13,6 +14,8 @@ import "reactflow/dist/style.css";
 import type { Character, Relationship } from "@/types/generator";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Modal } from "@/components/ui/modal";
+import { useToast } from "@/lib/hooks/useToast";
 
 const EDGE_COLORS: Record<string, string> = {
   trust: "#5fa85f",
@@ -42,6 +45,7 @@ export function RelationshipsGraph({
   campaignCode: string;
 }) {
   const router = useRouter();
+  const { show } = useToast();
   const [editingEdge, setEditingEdge] = useState<{
     id: string;
     type: string;
@@ -50,58 +54,63 @@ export function RelationshipsGraph({
   const [newType, setNewType] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { nodes, edges } = useMemo(() => {
-    const n: Node[] = characters.map((c, i) => {
-      const angle = (2 * Math.PI * i) / Math.max(1, characters.length);
-      const radius = 180;
-      return {
-        id: `char-${i}`,
-        position: {
-          x: 250 + radius * Math.cos(angle),
-          y: 200 + radius * Math.sin(angle),
-        },
-        data: { label: `${c.name}\n${c.class_name}` },
+  // Generic — это тип DATA узла, а не сам Node
+  const [nodes, setNodes, onNodesChange] = useNodesState<{ label: string }>([]);
+
+  useEffect(() => {
+    setNodes((prev) =>
+      characters.map((c, i) => {
+        const existing = prev.find((n) => n.id === `char-${i}`);
+        if (existing) {
+          return { ...existing, data: { label: c.name } };
+        }
+        const angle = (2 * Math.PI * i) / Math.max(1, characters.length);
+        const radius = 160;
+        return {
+          id: `char-${i}`,
+          position: {
+            x: 220 + radius * Math.cos(angle),
+            y: 180 + radius * Math.sin(angle),
+          },
+          data: { label: c.name },
+          style: {
+            background: "#1a1613",
+            color: "#e8ddc4",
+            border: "2px solid #c9a227",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            fontSize: "12px",
+            whiteSpace: "pre-line" as const,
+            textAlign: "center" as const,
+            width: 140,
+            animation: "node-pulse 2.4s ease-in-out infinite",
+          },
+        };
+      }),
+    );
+  }, [characters, setNodes]);
+
+  const edges: Edge[] = useMemo(
+    () =>
+      relationships.map((r, i) => ({
+        id: `rel-${i}`,
+        source: `char-${r.source_character_index}`,
+        target: `char-${r.target_character_index}`,
+        label: EDGE_LABELS[r.type] ?? r.type,
+        animated: r.type === "conflict",
         style: {
-          background: "#1a1613",
-          color: "#e8ddc4",
-          border: "1px solid #c9a227",
-          borderRadius: "8px",
-          padding: "8px 12px",
-          fontSize: "12px",
-          whiteSpace: "pre-line",
-          textAlign: "center" as const,
-          width: 140,
+          stroke: EDGE_COLORS[r.type] ?? "#8a7d6d",
+          strokeWidth: 2,
+          cursor: canEdit ? "pointer" : "default",
         },
-      };
-    });
-
-    const e: Edge[] = relationships.map((r, i) => ({
-      id: `rel-${i}`,
-      source: `char-${r.source_character_index}`,
-      target: `char-${r.target_character_index}`,
-      label: EDGE_LABELS[r.type] ?? r.type,
-      animated: r.type === "conflict",
-      style: {
-        stroke: EDGE_COLORS[r.type] ?? "#8a7d6d",
-        strokeWidth: 2,
-        cursor: canEdit ? "pointer" : "default",
-      },
-      labelStyle: {
-        fill: "#e8ddc4",
-        fontSize: 10,
-        fontWeight: 600,
-      },
-      labelBgStyle: {
-        fill: "#1a1613",
-        fillOpacity: 0.9,
-      },
-      labelBgPadding: [4, 2] as [number, number],
-      labelBgBorderRadius: 4,
-      data: { relIndex: i, type: r.type, description: r.description },
-    }));
-
-    return { nodes: n, edges: e };
-  }, [characters, relationships, canEdit]);
+        labelStyle: { fill: "#e8ddc4", fontSize: 10, fontWeight: 600 },
+        labelBgStyle: { fill: "#1a1613", fillOpacity: 0.9 },
+        labelBgPadding: [4, 2] as [number, number],
+        labelBgBorderRadius: 4,
+        data: { relIndex: i, type: r.type, description: r.description },
+      })),
+    [relationships, canEdit],
+  );
 
   const onEdgeClick: EdgeMouseHandler = (_event, edge) => {
     if (!canEdit) return;
@@ -121,7 +130,6 @@ export function RelationshipsGraph({
 
     setSaving(true);
     try {
-      // Находим relationship_id в БД по индексам
       const res = await fetch(
         `/api/campaigns/${campaignCode}/relationships?source=${rel.source_character_index}&target=${rel.target_character_index}`,
         {
@@ -134,8 +142,11 @@ export function RelationshipsGraph({
         const err = await res.json();
         throw new Error(err.error ?? "Ошибка");
       }
+      show("success", "Связь обновлена");
       router.refresh();
       setEditingEdge(null);
+    } catch (e) {
+      show("error", e instanceof Error ? e.message : "Ошибка");
     } finally {
       setSaving(false);
     }
@@ -159,52 +170,66 @@ export function RelationshipsGraph({
         ))}
         {canEdit && (
           <span className="text-forge-muted ml-2">
-            · клик по ребру — изменить тип
+            · перетаскивай плашки · клик по ребру — изменить тип
           </span>
         )}
       </div>
 
-      <div className="h-[500px] bg-forge-bg border border-forge-border rounded-lg overflow-hidden">
-        <ReactFlow nodes={nodes} edges={edges} onEdgeClick={onEdgeClick} fitView>
+      <div className="h-[400px] md:h-[500px] bg-forge-bg border border-forge-border rounded-lg overflow-hidden">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgeClick={onEdgeClick}
+          nodesDraggable={true}
+          nodesConnectable={false}
+          elementsSelectable={true}
+          fitView
+        >
           <Background color="#2e2620" gap={20} />
           <Controls />
         </ReactFlow>
       </div>
 
-      {editingEdge && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
-          onClick={() => setEditingEdge(null)}
-        >
-          <div
-            className="bg-forge-surface border border-forge-border rounded-lg max-w-md w-full p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-xl font-bold text-forge-gold-light">
-              Изменить связь
-            </h2>
+      <Modal
+        open={!!editingEdge}
+        onClose={() => setEditingEdge(null)}
+        title="Изменить связь"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditingEdge(null)} disabled={saving}>
+              Отмена
+            </Button>
+            <Button onClick={handleSave} disabled={saving} aria-busy={saving}>
+              {saving ? "Сохраняем..." : "Сохранить"}
+            </Button>
+          </>
+        }
+      >
+        {editingEdge && (
+          <div className="space-y-4">
             <p className="text-sm text-forge-muted">{editingEdge.description}</p>
             <div>
-              <label className="block text-sm text-forge-parchment mb-1.5">
+              <label
+                htmlFor="edge-type"
+                className="block text-sm text-forge-parchment mb-1.5"
+              >
                 Тип связи
               </label>
-              <Select value={newType} onChange={(e) => setNewType(e.target.value)}>
+              <Select
+                id="edge-type"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value)}
+              >
                 {Object.entries(EDGE_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
               </Select>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="ghost" onClick={() => setEditingEdge(null)} disabled={saving}>
-                Отмена
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Сохраняем..." : "Сохранить"}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

@@ -1,5 +1,17 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LightboxImage } from "@/components/ui/lightbox";
+import { ImagePickerModal } from "./ImagePickerModal";
+import { LocationCard } from "./LocationCard";
+import { FactionCard } from "./FactionCard";
+import { NpcCard } from "./NpcCard";
+import { SituationCard } from "./SituationCard";
+import { useToast } from "@/lib/hooks/useToast";
+import { IMAGE_DIMENSIONS } from "@/lib/images/dimensions";
 import type {
   CharacterLocation,
   Faction,
@@ -7,136 +19,168 @@ import type {
   Npc,
 } from "@/types/generator";
 
-const LOCATION_TYPE_LABEL: Record<string, string> = {
-  city: "Город",
-  temple: "Храм",
-  forest: "Лес",
-  ruins: "Руины",
-  port: "Порт",
-};
-
-const ATTITUDE_LABEL: Record<string, string> = {
-  ally: "Союзник",
-  enemy: "Враг",
-  neutral: "Нейтрал",
-};
-
-const ROLE_LABEL: Record<string, string> = {
-  ally: "Союзник",
-  enemy: "Враг",
-  neutral: "Нейтрал",
-};
-
-const CONNECTION_LABEL: Record<string, string> = {
-  born: "родился",
-  lost: "потерял кого-то",
-  served: "служил",
-  dreams: "мечтает попасть",
-};
-
 export function WorldTab({
+  campaignCode,
+  campaignTheme,
   locations,
   factions,
   npcs,
   character_locations,
   situation,
+  canEdit,
+  npcIds,
+  locationIds,
+  factionIds,
+  mapImageUrl,
 }: {
+  campaignCode: string;
+  campaignTheme: string;
   locations: Location[];
   factions: Faction[];
   npcs: Npc[];
   character_locations: CharacterLocation[];
   situation: string;
+  canEdit: boolean;
+  npcIds: string[];
+  locationIds: string[];
+  factionIds: string[];
+  mapImageUrl?: string | null;
 }) {
+  const router = useRouter();
+  const { show } = useToast();
+  const [pickerMapOpen, setPickerMapOpen] = useState(false);
+
+  async function changeMapImage(imageId: string) {
+    const res = await fetch(`/api/campaigns/${campaignCode}/map`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_id: imageId }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error ?? "Ошибка");
+    }
+    show("success", "Карта региона обновлена");
+    router.refresh();
+  }
+
   return (
     <div className="space-y-8">
+      {/* ============ Карта региона ============ */}
       <Card>
         <CardHeader>
-          <CardTitle>Ситуация</CardTitle>
+          <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
+            <span>Карта региона</span>
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPickerMapOpen(true)}
+                aria-label="Сменить карту региона"
+              >
+                Сменить карту
+              </Button>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-forge-parchment">{situation}</p>
+          <div className="w-full max-w-sm">
+            <LightboxImage
+              src={mapImageUrl ?? null}
+              width={IMAGE_DIMENSIONS.map.width}
+              height={IMAGE_DIMENSIONS.map.height}
+              alt="Карта региона"
+              label="Карта региона"
+              hint={
+                !mapImageUrl
+                  ? `${IMAGE_DIMENSIONS.map.width}×${IMAGE_DIMENSIONS.map.height} (A4 альбом)`
+                  : undefined
+              }
+              rounded="md"
+            />
+          </div>
+          {mapImageUrl && (
+            <p className="text-forge-muted text-xs mt-3">
+              Нажми на карту, чтобы открыть на весь экран. В конспекте мастера
+              карта печатается отдельным листом A4 (ландшафт).
+            </p>
+          )}
         </CardContent>
       </Card>
 
+      {/* ============ Ситуация ============ */}
+      <SituationCard
+        campaignCode={campaignCode}
+        situation={situation}
+        theme={campaignTheme}
+        canEdit={canEdit}
+      />
+
+      {/* ============ Локации ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">Локации</h2>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {locations.map((l, i) => {
             const links = character_locations.filter(
               (cl) => cl.location_index === i,
             );
+            const locId = locationIds[i];
             return (
-              <Card key={i}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-2">
-                    <span>{l.name}</span>
-                    <Badge variant="muted">
-                      {LOCATION_TYPE_LABEL[l.type] ?? l.type}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm text-forge-parchment">{l.description}</p>
-                  {links.length > 0 && (
-                    <div className="text-xs text-forge-muted">
-                      Связаны:{" "}
-                      {links
-                        .map(
-                          (cl) =>
-                            `герой #${cl.character_index + 1} (${CONNECTION_LABEL[cl.connection_type] ?? cl.connection_type})`,
-                        )
-                        .join(", ")}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <LocationCard
+                key={i}
+                location={l}
+                locationId={locId}
+                theme={campaignTheme}
+                canEdit={canEdit}
+                links={links}
+              />
             );
           })}
         </div>
       </section>
 
+      {/* ============ Фракции ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">Фракции</h2>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {factions.map((f, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between gap-2">
-                  <span>{f.name}</span>
-                  <Badge variant={f.attitude === "enemy" ? "ember" : "muted"}>
-                    {ATTITUDE_LABEL[f.attitude] ?? f.attitude}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-forge-parchment">{f.description}</p>
-                <p className="text-xs text-forge-muted">Цель: {f.goals}</p>
-              </CardContent>
-            </Card>
+            <FactionCard
+              key={i}
+              faction={f}
+              factionId={factionIds[i]}
+              theme={campaignTheme}
+              canEdit={canEdit}
+            />
           ))}
         </div>
       </section>
 
+      {/* ============ NPC ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">NPC</h2>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {npcs.map((n, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between gap-2">
-                  <span>{n.name}</span>
-                  <Badge variant={n.role === "enemy" ? "ember" : "muted"}>
-                    {ROLE_LABEL[n.role] ?? n.role}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-forge-parchment">{n.description}</p>
-              </CardContent>
-            </Card>
+            <NpcCard
+              key={i}
+              npc={n}
+              npcId={npcIds[i]}
+              theme={campaignTheme}
+              canEdit={canEdit}
+            />
           ))}
         </div>
       </section>
+
+      {/* ============ Пикер карты ============ */}
+      <ImagePickerModal
+        open={pickerMapOpen}
+        onClose={() => setPickerMapOpen(false)}
+        title="Карта региона"
+        type="map"
+        theme={campaignTheme}
+        currentUrl={mapImageUrl ?? null}
+        onSelect={changeMapImage}
+      />
     </div>
   );
 }
