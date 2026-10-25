@@ -1,8 +1,6 @@
 -- ============================================
 -- PartyForge 008: атомарное сохранение кампании
 -- ============================================
--- Функция принимает всю кампанию одним JSONB и вставляет её
--- в одной транзакции. Если что-то падает — откат целиком.
 
 create or replace function save_campaign_atomic(
   p_user_id uuid,
@@ -30,9 +28,6 @@ declare
   v_fact_index int;
   v_char_index int;
 begin
-  -- ============================================
-  -- 1. Кампания
-  -- ============================================
   insert into campaigns (
     share_code, user_id, title, system, level, tone, theme,
     party_size, world, constraints, duration, situation,
@@ -54,25 +49,16 @@ begin
     nullif(p_image_ids->>'terrain_image', 'null')::uuid
   ) returning id into v_campaign_id;
 
-  -- ============================================
-  -- 2. Мастер
-  -- ============================================
   insert into campaign_members (campaign_id, user_id, role)
   values (v_campaign_id, p_user_id, 'master');
 
-  -- ============================================
-  -- 3. Статистика (upsert)
-  -- ============================================
   insert into user_stats (user_id, campaigns_created)
   values (p_user_id, 1)
   on conflict (user_id) do update
     set campaigns_created = user_stats.campaigns_created + 1;
 
-  -- ============================================
-  -- 4. Персонажи + история
-  -- ============================================
   for v_rec in
-    select value, ordinality
+    select value, ordinality::int as ordinality
     from jsonb_array_elements(p_campaign->'characters') with ordinality
   loop
     v_img := nullif(p_image_ids->'character_images'->>(v_rec.ordinality - 1), 'null')::uuid;
@@ -106,11 +92,8 @@ begin
     );
   end loop;
 
-  -- ============================================
-  -- 5. Локации
-  -- ============================================
   for v_rec in
-    select value, ordinality
+    select value, ordinality::int as ordinality
     from jsonb_array_elements(p_campaign->'locations') with ordinality
   loop
     v_img := nullif(p_image_ids->'location_images'->>(v_rec.ordinality - 1), 'null')::uuid;
@@ -127,11 +110,8 @@ begin
     v_loc_ids[v_rec.ordinality] := v_loc_id;
   end loop;
 
-  -- ============================================
-  -- 6. Фракции
-  -- ============================================
   for v_rec in
-    select value, ordinality
+    select value, ordinality::int as ordinality
     from jsonb_array_elements(p_campaign->'factions') with ordinality
   loop
     insert into factions (campaign_id, name, goals, attitude, description)
@@ -146,9 +126,6 @@ begin
     v_fact_ids[v_rec.ordinality] := v_fact_id;
   end loop;
 
-  -- ============================================
-  -- 7. Связи
-  -- ============================================
   for v_rec in
     select value from jsonb_array_elements(p_campaign->'relationships')
   loop
@@ -164,9 +141,6 @@ begin
     );
   end loop;
 
-  -- ============================================
-  -- 8. Связи персонаж-локация
-  -- ============================================
   for v_rec in
     select value from jsonb_array_elements(p_campaign->'character_locations')
   loop
@@ -180,11 +154,8 @@ begin
     );
   end loop;
 
-  -- ============================================
-  -- 9. NPC
-  -- ============================================
   for v_rec in
-    select value, ordinality
+    select value, ordinality::int as ordinality
     from jsonb_array_elements(p_campaign->'npcs') with ordinality
   loop
     v_img := nullif(p_image_ids->'npc_images'->>(v_rec.ordinality - 1), 'null')::uuid;
@@ -205,9 +176,6 @@ begin
     );
   end loop;
 
-  -- ============================================
-  -- 10. Крючки
-  -- ============================================
   for v_rec in
     select value from jsonb_array_elements(p_campaign->'hooks')
   loop
@@ -226,9 +194,6 @@ begin
     );
   end loop;
 
-  -- ============================================
-  -- Возврат
-  -- ============================================
   return jsonb_build_object(
     'campaign_id', v_campaign_id,
     'share_code', p_share_code
@@ -236,6 +201,5 @@ begin
 end;
 $$;
 
--- Права на выполнение (RLS обходится через security definer)
 grant execute on function save_campaign_atomic(uuid, text, text, jsonb, jsonb, jsonb)
   to authenticated, service_role;
