@@ -13,6 +13,7 @@ const VALID_TONES: Tone[] = [
   "wild",
   "religious",
 ];
+
 const VALID_THEMES: Theme[] = ["classic", "skyrim"];
 
 export async function POST(req: NextRequest) {
@@ -23,7 +24,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const theme: Theme = VALID_THEMES.includes(body.theme) ? body.theme : "classic";
+
+    const theme: Theme = VALID_THEMES.includes(body.theme)
+      ? body.theme
+      : "classic";
 
     const input: GeneratorInput = {
       system: body.system ?? "dnd5e",
@@ -38,6 +42,7 @@ export async function POST(req: NextRequest) {
 
     const data = await loadGeneratorData();
     const campaign = generateCampaign(input, data);
+
     const { share_code } = await saveCampaign(
       input,
       campaign,
@@ -48,9 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ share_code });
   } catch (e) {
     console.error("POST /api/generate failed:", e);
-    return NextResponse.json(
-      { error: "Не удалось сгенерировать кампанию" },
-      { status: 500 },
-    );
+    const msg = e instanceof Error ? e.message : "Не удалось сгенерировать кампанию";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

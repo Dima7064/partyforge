@@ -17,12 +17,15 @@ import type {
 import { generateShareCode } from "@/lib/campaigns/shareCode";
 import { unlockAchievement } from "@/lib/db/achievements";
 import { getRandomPoolImage } from "@/lib/db/images";
+import { assertCampaignLimit } from "@/lib/db/limits";
 
 const MAX_CODE_ATTEMPTS = 5;
 
 // ============================================
 // Предустановленные данные для редактирования (Скайрим)
+// (Удаляется в Фазе 1)
 // ============================================
+
 const SKYRIM_LOCATIONS_PRESETS = [
   { name: "Вайтран", type: "city", description: "Город у подножия Драконьего моста, окружённый равнинами." },
   { name: "Солитьюд", type: "city", description: "Столица Скайрима, обитель Империи и Высокого короля." },
@@ -84,9 +87,12 @@ export async function saveCampaign(
   userId: string,
   title?: string,
 ): Promise<{ share_code: string; id: string }> {
+  // Лимит 10 кампаний на пользователя
+  await assertCampaignLimit(userId, "create");
+
   const supabase = createServerClient();
 
-  // ---- 0. Все картинки — параллельно ----
+  // ----- 0. Все картинки — параллельно -----
   const [characterImages, npcImages, locationImages, mapImage, terrainImage] =
     await Promise.all([
       Promise.all(
@@ -126,14 +132,13 @@ export async function saveCampaign(
     terrain_image: terrainImage?.id ?? null,
   };
 
-  // ---- 1. RPC: вся вставка в одной транзакции ----
+  // ----- 1. RPC: вся вставка в одной транзакции -----
   let share_code = "";
   let campaignId = "";
   let inserted = false;
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
     share_code = generateShareCode();
-
     const { data, error } = await supabase.rpc("save_campaign_atomic", {
       p_user_id: userId,
       p_share_code: share_code,
@@ -144,7 +149,6 @@ export async function saveCampaign(
     });
 
     if (error) {
-      // 23505 = unique_violation на share_code → пробуем другой код
       if (error.code === "23505") continue;
       throw error;
     }
@@ -158,7 +162,7 @@ export async function saveCampaign(
     throw new Error("Не удалось создать share_code");
   }
 
-  // ---- 2. Достижения (вне транзакции, не критично) ----
+  // ----- 2. Достижения (вне транзакции, не критично) -----
   const { count } = await supabase
     .from("campaign_members")
     .select("*", { count: "exact", head: true })
@@ -172,7 +176,6 @@ export async function saveCampaign(
     achievementChecks.push(unlockAchievement(userId, "ten_campaigns"));
   if (input.theme === "skyrim")
     achievementChecks.push(unlockAchievement(userId, "skyrim_master"));
-
   await Promise.all(achievementChecks);
 
   return { share_code, id: campaignId };
@@ -189,6 +192,7 @@ export async function getCampaignByCode(
     .select("*")
     .eq("share_code", code)
     .maybeSingle();
+
   if (error) throw error;
   if (!campaign) return null;
 
@@ -209,7 +213,10 @@ export async function getCampaignByCode(
       .select("*")
       .eq("campaign_id", campaignId)
       .order("created_at"),
-    supabase.from("relationships").select("*").eq("campaign_id", campaignId),
+    supabase
+      .from("relationships")
+      .select("*")
+      .eq("campaign_id", campaignId),
     supabase
       .from("locations")
       .select("*")
@@ -256,8 +263,10 @@ export async function getCampaignByCode(
 
   const charIdToIndex = new Map<string, number>();
   chars.forEach((c, i) => charIdToIndex.set(c.id, i));
+
   const locIdToIndex = new Map<string, number>();
   locs.forEach((l, i) => locIdToIndex.set(l.id, i));
+
   const factIdToIndex = new Map<string, number>();
   facts.forEach((f, i) => factIdToIndex.set(f.id, i));
 
@@ -268,10 +277,7 @@ export async function getCampaignByCode(
   if (campaign.map_image_id) allImageIds.add(campaign.map_image_id);
   if (campaign.terrain_image_id) allImageIds.add(campaign.terrain_image_id);
 
-  const imageMap = new Map<
-    string,
-    { url: string; width: number; height: number }
-  >();
+  const imageMap = new Map<string, { url: string; width: number; height: number }>();
   if (allImageIds.size > 0) {
     const { data: imgs } = await supabase
       .from("images")
@@ -289,18 +295,19 @@ export async function getCampaignByCode(
   const viewerRole: "master" | "player" | "none" = !viewerUserId
     ? "none"
     : (membersRes.data ?? []).some(
-        (m) => m.user_id === viewerUserId && m.role === "master",
-      )
-    ? "master"
-    : (membersRes.data ?? []).some(
-        (m) => m.user_id === viewerUserId && m.role === "player",
-      )
-    ? "player"
-    : "none";
+          (m) => m.user_id === viewerUserId && m.role === "master",
+        )
+      ? "master"
+      : (membersRes.data ?? []).some(
+            (m) => m.user_id === viewerUserId && m.role === "player",
+          )
+        ? "player"
+        : "none";
 
   const viewerMember = viewerUserId
     ? (membersRes.data ?? []).find((m) => m.user_id === viewerUserId)
     : undefined;
+
   const viewerCharacterIndex = viewerMember?.character_id
     ? charIdToIndex.get(viewerMember.character_id)
     : undefined;
@@ -487,13 +494,16 @@ export async function deleteCampaignByCode(
   userId: string,
 ): Promise<boolean> {
   const supabase = createServerClient();
+
   const { data } = await supabase
     .from("campaigns")
     .select("id, user_id")
     .eq("share_code", code)
     .maybeSingle();
+
   if (!data) return false;
   if (data.user_id !== userId) throw new Error("Нет доступа");
+
   const { error } = await supabase.from("campaigns").delete().eq("id", data.id);
   if (error) throw error;
   return true;
@@ -505,17 +515,21 @@ export async function updateCampaignSettings(
   updates: { title?: string; status?: "draft" | "active" | "finished" },
 ): Promise<void> {
   const supabase = createServerClient();
+
   const { data } = await supabase
     .from("campaigns")
     .select("id, user_id")
     .eq("share_code", code)
     .maybeSingle();
+
   if (!data) throw new Error("Кампания не найдена");
   if (data.user_id !== userId) throw new Error("Нет доступа");
+
   const { error } = await supabase
     .from("campaigns")
     .update(updates)
     .eq("id", data.id);
+
   if (error) throw error;
 }
 
@@ -524,10 +538,12 @@ export async function joinCampaign(
   userId: string,
   characterIndex: number,
 ): Promise<{ ok: true }> {
+  // Лимит 10 кампаний
+  await assertCampaignLimit(userId, "join");
+
   const supabase = createServerClient();
 
   const inviteCheck = await findInviteByCode(code);
-
   let campaignShareCode = code;
   let role: "master" | "player" = "player";
   let invite: Invite | null = null;
@@ -553,9 +569,10 @@ export async function joinCampaign(
 
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("id")
+    .select("id, party_size")
     .eq("share_code", campaignShareCode)
     .maybeSingle();
+
   if (!campaign) throw new Error("Кампания не найдена");
 
   const { data: existing } = await supabase
@@ -564,24 +581,35 @@ export async function joinCampaign(
     .eq("campaign_id", campaign.id)
     .eq("user_id", userId)
     .maybeSingle();
+
   if (existing) throw new Error("Уже участник");
 
   let characterId: string | null = null;
-  let characterInfo: {
-    class_name: string;
-    race_name: string;
-    role: string;
-  } | null = null;
+  let characterInfo: { class_name: string; race_name: string; role: string } | null =
+    null;
 
   if (role === "player") {
+    // Проверка: не заполнена ли кампания
+    const { count: playerCount } = await supabase
+      .from("campaign_members")
+      .select("*", { count: "exact", head: true })
+      .eq("campaign_id", campaign.id)
+      .eq("role", "player");
+
+    if ((playerCount ?? 0) >= campaign.party_size - 1) {
+      throw new Error("Кампания заполнена. Все места заняты.");
+    }
+
     const { data: chars } = await supabase
       .from("characters")
       .select("id, class_name, race_name, role")
       .eq("campaign_id", campaign.id)
       .order("created_at");
+
     if (!chars || characterIndex < 0 || characterIndex >= chars.length) {
       throw new Error("Неверный персонаж");
     }
+
     characterId = chars[characterIndex].id;
     characterInfo = chars[characterIndex];
   }
@@ -592,6 +620,7 @@ export async function joinCampaign(
     role,
     character_id: characterId,
   });
+
   if (error) throw error;
 
   if (invite) {
@@ -632,6 +661,7 @@ export async function joinCampaign(
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("role", "player");
+
   if ((count ?? 0) >= 1) await unlockAchievement(userId, "first_join");
   if ((count ?? 0) >= 5) await unlockAchievement(userId, "five_joins");
 
@@ -667,6 +697,7 @@ export async function updateCharacter(
     .select("id, campaign_id")
     .eq("id", characterId)
     .maybeSingle();
+
   if (!char) throw new Error("Персонаж не найден");
 
   const { data: member } = await supabase
@@ -712,18 +743,16 @@ export async function updateCharacter(
   if (updates.background_name !== undefined)
     patch.background_name = updates.background_name;
   if (updates.abilities !== undefined) patch.abilities = updates.abilities;
-  if (updates.personality !== undefined)
-    patch.personality = updates.personality;
+  if (updates.personality !== undefined) patch.personality = updates.personality;
   if (updates.backstory !== undefined) patch.backstory = updates.backstory;
-
   if (Object.keys(patch).length === 0) return;
 
   const { error } = await supabase
     .from("characters")
     .update(patch)
     .eq("id", characterId);
-  if (error) throw error;
 
+  if (error) throw error;
   await unlockAchievement(userId, "character_editor");
 }
 
@@ -739,6 +768,7 @@ export async function updateRelationshipType(
     .select("id, campaign_id")
     .eq("id", relationshipId)
     .maybeSingle();
+
   if (!rel) throw new Error("Связь не найдена");
 
   const { data: member } = await supabase
@@ -747,6 +777,7 @@ export async function updateRelationshipType(
     .eq("campaign_id", rel.campaign_id)
     .eq("user_id", userId)
     .maybeSingle();
+
   if (member?.role !== "master")
     throw new Error("Только мастер может менять связи");
 
@@ -754,6 +785,7 @@ export async function updateRelationshipType(
     .from("relationships")
     .update({ type: newType })
     .eq("id", relationshipId);
+
   if (error) throw error;
 }
 
@@ -764,11 +796,7 @@ export async function updateRelationshipType(
 export async function createInvite(
   campaignCode: string,
   userId: string,
-  options: {
-    role: "player" | "master";
-    expiresInHours?: number;
-    maxUses?: number;
-  },
+  options: { role: "player" | "master"; expiresInHours?: number; maxUses?: number },
 ): Promise<Invite> {
   const supabase = createServerClient();
 
@@ -777,15 +805,14 @@ export async function createInvite(
     .select("id, user_id")
     .eq("share_code", campaignCode)
     .maybeSingle();
+
   if (!campaign) throw new Error("Кампания не найдена");
   if (campaign.user_id !== userId)
     throw new Error("Только мастер может приглашать");
 
   const code = generateShareCode();
   const expires_at = options.expiresInHours
-    ? new Date(
-        Date.now() + options.expiresInHours * 3600 * 1000,
-      ).toISOString()
+    ? new Date(Date.now() + options.expiresInHours * 3600 * 1000).toISOString()
     : null;
 
   const { data, error } = await supabase
@@ -800,6 +827,7 @@ export async function createInvite(
     })
     .select("*")
     .single();
+
   if (error) throw error;
   return data;
 }
@@ -815,6 +843,7 @@ export async function getInvites(
     .select("id, user_id")
     .eq("share_code", campaignCode)
     .maybeSingle();
+
   if (!campaign) throw new Error("Кампания не найдена");
   if (campaign.user_id !== userId)
     throw new Error("Только мастер видит приглашения");
@@ -824,6 +853,7 @@ export async function getInvites(
     .select("*")
     .eq("campaign_id", campaign.id)
     .order("created_at", { ascending: false });
+
   return data ?? [];
 }
 
@@ -838,6 +868,7 @@ export async function deleteInvite(
     .select("id, created_by")
     .eq("id", inviteId)
     .maybeSingle();
+
   if (!inv) throw new Error("Приглашение не найдено");
   if (inv.created_by !== userId) throw new Error("Нет доступа");
 
@@ -899,11 +930,13 @@ export async function leaveCampaign(
   userId: string,
 ): Promise<void> {
   const supabase = createServerClient();
+
   const { data: campaign } = await supabase
     .from("campaigns")
     .select("id, user_id")
     .eq("share_code", campaignCode)
     .maybeSingle();
+
   if (!campaign) throw new Error("Кампания не найдена");
 
   const { data: member } = await supabase
@@ -914,6 +947,7 @@ export async function leaveCampaign(
     .maybeSingle();
 
   if (!member) throw new Error("Ты не участник этой кампании");
+
   if (member.role === "master") {
     throw new Error(
       "Мастер не может просто покинуть кампанию. Ты можешь её удалить.",
@@ -946,6 +980,7 @@ export async function changeCharacterImage(
     .select("id, campaign_id")
     .eq("id", characterId)
     .maybeSingle();
+
   if (!char) throw new Error("Персонаж не найден");
 
   const { data: member } = await supabase
@@ -965,17 +1000,19 @@ export async function changeCharacterImage(
     .eq("id", imageId)
     .eq("is_pool", true)
     .maybeSingle();
+
   if (!image) throw new Error("Изображение не найдено в пуле");
 
   const { error } = await supabase
     .from("characters")
     .update({ image_id: imageId })
     .eq("id", characterId);
+
   if (error) throw error;
 }
 
 // ============================================
-// Редактирование мира (Локации, Фракции, NPC, Крючки, Ситуация)
+// Редактирование мира
 // ============================================
 
 export async function updateLocation(
@@ -990,6 +1027,7 @@ export async function updateLocation(
     .select("id, campaign_id")
     .eq("id", id)
     .single();
+
   if (!loc) throw new Error("Локация не найдена");
 
   const { data: member } = await supabase
@@ -998,6 +1036,7 @@ export async function updateLocation(
     .eq("campaign_id", loc.campaign_id)
     .eq("user_id", userId)
     .single();
+
   if (member?.role !== "master") throw new Error("Только мастер");
 
   const { data: campaign } = await supabase
@@ -1007,18 +1046,13 @@ export async function updateLocation(
     .single();
 
   if (campaign?.theme === "skyrim" && updates.name) {
-    const preset = SKYRIM_LOCATIONS_PRESETS.find(
-      (l) => l.name === updates.name,
-    );
+    const preset = SKYRIM_LOCATIONS_PRESETS.find((l) => l.name === updates.name);
     if (!preset) throw new Error("Такой локации нет в Скайриме");
     updates.description = preset.description;
     updates.type = preset.type;
   }
 
-  const { error } = await supabase
-    .from("locations")
-    .update(updates)
-    .eq("id", id);
+  const { error } = await supabase.from("locations").update(updates).eq("id", id);
   if (error) throw error;
 }
 
@@ -1034,6 +1068,7 @@ export async function updateFaction(
     .select("id, campaign_id")
     .eq("id", id)
     .single();
+
   if (!fact) throw new Error("Фракция не найдена");
 
   const { data: member } = await supabase
@@ -1042,6 +1077,7 @@ export async function updateFaction(
     .eq("campaign_id", fact.campaign_id)
     .eq("user_id", userId)
     .single();
+
   if (member?.role !== "master") throw new Error("Только мастер");
 
   const { data: campaign } = await supabase
@@ -1051,18 +1087,13 @@ export async function updateFaction(
     .single();
 
   if (campaign?.theme === "skyrim" && updates.name) {
-    const preset = SKYRIM_FACTIONS_PRESETS.find(
-      (f) => f.name === updates.name,
-    );
+    const preset = SKYRIM_FACTIONS_PRESETS.find((f) => f.name === updates.name);
     if (!preset) throw new Error("Такой фракции нет в Скайриме");
     updates.goals = preset.goals;
     updates.description = preset.description;
   }
 
-  const { error } = await supabase
-    .from("factions")
-    .update(updates)
-    .eq("id", id);
+  const { error } = await supabase.from("factions").update(updates).eq("id", id);
   if (error) throw error;
 }
 
@@ -1078,6 +1109,7 @@ export async function updateNpc(
     .select("id, campaign_id")
     .eq("id", id)
     .single();
+
   if (!npc) throw new Error("NPC не найден");
 
   const { data: member } = await supabase
@@ -1086,6 +1118,7 @@ export async function updateNpc(
     .eq("campaign_id", npc.campaign_id)
     .eq("user_id", userId)
     .single();
+
   if (member?.role !== "master") throw new Error("Только мастер");
 
   const { data: campaign } = await supabase
@@ -1110,17 +1143,21 @@ export async function updateSituation(
   situation: string,
 ): Promise<void> {
   const supabase = createServerClient();
+
   const { data: campaign } = await supabase
     .from("campaigns")
     .select("id, user_id")
     .eq("share_code", code)
     .maybeSingle();
+
   if (!campaign) throw new Error("Кампания не найдена");
   if (campaign.user_id !== userId) throw new Error("Только мастер");
+
   const { error } = await supabase
     .from("campaigns")
     .update({ situation })
     .eq("id", campaign.id);
+
   if (error) throw error;
 }
 
@@ -1141,6 +1178,7 @@ export async function updateHook(
     .select("id, campaign_id")
     .eq("id", id)
     .maybeSingle();
+
   if (!hook) throw new Error("Крючок не найден");
 
   const { data: member } = await supabase
@@ -1149,6 +1187,7 @@ export async function updateHook(
     .eq("campaign_id", hook.campaign_id)
     .eq("user_id", userId)
     .maybeSingle();
+
   if (member?.role !== "master") throw new Error("Только мастер");
 
   const { error } = await supabase.from("hooks").update(updates).eq("id", id);
