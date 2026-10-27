@@ -62,7 +62,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-forge-gold-light">
-            Регистрация в PartyForge
+            Регистрация в SagaForge
           </h1>
           <p className="text-forge-muted text-sm mt-2">
             Логин и пароль. Никаких email и личных данных.

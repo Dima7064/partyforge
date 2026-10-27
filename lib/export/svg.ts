@@ -98,7 +98,7 @@ export function exportRelationshipsSvg(campaign: SavedCampaignData): string {
 
   // Футер
   parts.push(
-    `<text x="${width - 30}" y="${height - 20}" fill="#8a7d6d" font-size="11" font-family="sans-serif" text-anchor="end">PartyForge · ${escape(campaign.share_code)}</text>`,
+    `<text x="${width - 30}" y="${height - 20}" fill="#8a7d6d" font-size="11" font-family="sans-serif" text-anchor="end">SagaForge · ${escape(campaign.share_code)}</text>`,
   );
 
   parts.push(`</svg>`);

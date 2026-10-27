@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PartyForge — конструктор партий для D&D",
+  title: "SagaForge — конструктор партий для D&D",
   description:
     "Собирай связанные партии персонажей, локации, ситуации и сюжетные крючки для настольных ролевых игр.",
 };

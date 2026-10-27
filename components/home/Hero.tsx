@@ -24,7 +24,7 @@ export function Hero({ authenticated }: { authenticated: boolean }) {
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
-          PartyForge
+          SagaForge
         </motion.h1>
         <p className="text-forge-muted text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
           Собирай связанные партии персонажей, локации, ситуации и сюжетные

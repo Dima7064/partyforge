@@ -174,7 +174,7 @@ export function CharacterSheetDocument({
         ) : null}
 
         <View style={styles.footer} fixed>
-          <Text>PartyForge · кампания {campaignCode}</Text>
+          <Text>SagaForge · кампания {campaignCode}</Text>
           <Text
             render={({ pageNumber, totalPages }) =>
               `стр. ${pageNumber} / ${totalPages}`

@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-forge-gold-light">
-            Вход в PartyForge
+            Вход в SagaForge
           </h1>
         </div>
 

@@ -1,4 +1,4 @@
-# ER-диаграмма PartyForge
+# ER-диаграмма SagaForge
 
 ```mermaid
 erDiagram

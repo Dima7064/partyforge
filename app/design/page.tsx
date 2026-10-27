@@ -17,7 +17,7 @@ export default function DesignPage() {
   return (
     <main className="min-h-screen p-8 max-w-5xl mx-auto space-y-12">
       <div>
-        <h1 className="text-4xl font-bold text-forge-gold-light mb-2">Дизайн-система PartyForge</h1>
+        <h1 className="text-4xl font-bold text-forge-gold-light mb-2">Дизайн-система SagaForge</h1>
         <p className="text-forge-muted">Песочница компонентов. Здесь смотрим, как всё выглядит.</p>
       </div>
 

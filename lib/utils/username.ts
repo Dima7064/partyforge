@@ -16,5 +16,5 @@ export function validatePassword(password: string): string | null {
 }
 
 export function usernameToEmail(username: string): string {
-  return `${username.toLowerCase()}@partyforge.local`;
+  return `${username.toLowerCase()}@sagaforge.local`;
 }

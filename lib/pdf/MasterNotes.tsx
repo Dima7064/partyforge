@@ -64,7 +64,7 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
       {/* ============ Обложка ============ */}
       <Page size="A4" style={styles.cover}>
         <Text style={[styles.small, { textTransform: "uppercase", letterSpacing: 4 }]}>
-          PartyForge · Конспект мастера
+          SagaForge · Конспект мастера
         </Text>
         <Text style={[styles.h1, { fontSize: 38, marginTop: 8 }]}>Кампания</Text>
         <Text style={{ fontSize: 16, marginTop: 4 }}>
@@ -81,7 +81,7 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
         </View>
 
         <View style={styles.footer} fixed>
-          <Text>PartyForge · {campaign.share_code}</Text>
+          <Text>SagaForge · {campaign.share_code}</Text>
           <Text>Конспект мастера</Text>
         </View>
       </Page>
