@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get("next") ?? "/dashboard";
+
   const { show } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,8 +27,10 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     const uErr = validateUsername(username);
     if (uErr) { show("error", uErr); return; }
+
     const pErr = validatePassword(password);
     if (pErr) { show("error", pErr); return; }
 
@@ -43,13 +48,14 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),
       });
+
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error ?? "Не удалось создать профиль");
       }
 
       show("success", "Аккаунт создан");
-      router.push("/dashboard");
+      router.push(nextUrl);
       router.refresh();
     } catch (err) {
       show("error", err instanceof Error ? err.message : "Ошибка регистрации");
@@ -68,7 +74,6 @@ export default function RegisterPage() {
             Логин и пароль. Никаких email и личных данных.
           </p>
         </div>
-
         <Card>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,17 +100,15 @@ export default function RegisterPage() {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
                 {loading ? "Создаём..." : "Зарегистрироваться"}
               </Button>
             </form>
           </CardContent>
         </Card>
-
         <p className="text-center text-forge-muted text-sm">
           Уже есть аккаунт?{" "}
-          <Link href="/login" className="text-forge-gold hover:underline">
+          <Link href={`/login?next=${nextUrl}`} className="text-forge-gold hover:underline">
             Войти
           </Link>
         </p>

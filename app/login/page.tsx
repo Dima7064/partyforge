@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import { usernameToEmail } from "@/lib/utils/username";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get("next") ?? "/dashboard";
+  
   const { show } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +32,7 @@ export default function LoginPage() {
       });
       if (signErr) throw signErr;
       show("success", "Добро пожаловать");
-      router.push("/dashboard");
+      router.push(nextUrl);
       router.refresh();
     } catch {
       show("error", "Неверный логин или пароль");
@@ -45,7 +48,6 @@ export default function LoginPage() {
             Вход в SagaForge
           </h1>
         </div>
-
         <Card>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,17 +72,15 @@ export default function LoginPage() {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
                 {loading ? "Входим..." : "Войти"}
               </Button>
             </form>
           </CardContent>
         </Card>
-
         <p className="text-center text-forge-muted text-sm">
           Нет аккаунта?{" "}
-          <Link href="/register" className="text-forge-gold hover:underline">
+          <Link href={`/register?next=${nextUrl}`} className="text-forge-gold hover:underline">
             Зарегистрироваться
           </Link>
         </p>

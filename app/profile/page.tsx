@@ -19,7 +19,7 @@ import {
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/profile");
 
   const profile = await getProfile(user.id);
   if (!profile) redirect("/register");

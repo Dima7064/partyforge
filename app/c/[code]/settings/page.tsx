@@ -16,7 +16,7 @@ export default async function CampaignSettingsPage({
 }) {
   const { code } = await params;
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?next=/c/${code}/settings`);
 
   const campaign = await getCampaignByCode(code, user.id);
   if (!campaign) notFound();

@@ -16,7 +16,6 @@ export default function GeneratePage() {
   const router = useRouter();
   const { show, showAchievement } = useToast();
   const [loading, setLoading] = useState(false);
-
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState(3);
   const [partySize, setPartySize] = useState(4);
@@ -26,7 +25,6 @@ export default function GeneratePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -43,10 +41,17 @@ export default function GeneratePage() {
           title: title.trim() || undefined,
         }),
       });
+
+      if (res.status === 401) {
+        router.push("/register?next=/generate");
+        return;
+      }
+
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error ?? "Ошибка");
       }
+
       const { share_code } = await res.json();
 
       if (shouldShowAchievement("first_campaign")) {
@@ -123,7 +128,9 @@ export default function GeneratePage() {
               </div>
 
               <div>
-                <Label htmlFor="partySize">Размер группы (включая мастера)</Label>
+                <Label htmlFor="partySize">
+                  Размер группы (включая мастера)
+                </Label>
                 <Input
                   id="partySize"
                   type="number"
