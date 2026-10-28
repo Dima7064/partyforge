@@ -86,6 +86,24 @@ export function NpcCard({
     router.refresh();
   }
 
+  async function saveToLibrary() {
+    try {
+      const res = await fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "npc",
+          name: npc.name,
+          data: npc,
+        }),
+      });
+      if (!res.ok) throw new Error("Ошибка сохранения");
+      show("success", "Сохранено в библиотеку");
+    } catch (e) {
+      show("error", "Не удалось сохранить");
+    }
+  }
+
   return (
     <>
       <Card>
@@ -165,12 +183,15 @@ export function NpcCard({
               <>
                 <p className="text-sm text-forge-parchment">{npc.description}</p>
                 {canEdit && npcId && (
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex gap-2 mt-1 flex-wrap">
                     <Button size="sm" variant="ghost" onClick={() => setPickerOpen(true)}>
                       Картинка
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
                       Изменить
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={saveToLibrary}>
+                      В библиотеку
                     </Button>
                   </div>
                 )}

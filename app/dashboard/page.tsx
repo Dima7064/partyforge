@@ -17,11 +17,6 @@ function formatPlayers(n: number): string {
   return `${n} игроков`;
 }
 
-const THEME_LABEL: Record<string, string> = {
-  classic: "Классика D&D",
-  skyrim: "Скайрим",
-};
-
 const STATUS_LABEL: Record<string, string> = {
   draft: "Черновик",
   active: "Активна",
@@ -36,6 +31,7 @@ export default async function DashboardPage() {
   if (!profile) redirect("/register");
 
   const admin = createServerClient();
+
   const { data: memberships } = await admin
     .from("campaign_members")
     .select("campaign_id, role")
@@ -50,7 +46,6 @@ export default async function DashboardPage() {
     id: string;
     share_code: string;
     title: string;
-    theme: string;
     status: string;
     party_size: number;
   }> =
@@ -59,9 +54,7 @@ export default async function DashboardPage() {
           (
             await admin
               .from("campaigns")
-              .select(
-                "id, share_code, title, theme, status, party_size, created_at",
-              )
+              .select("id, share_code, title, status, party_size, created_at")
               .in("id", campaignIds)
               .order("created_at", { ascending: false })
           ).data ?? []
@@ -82,15 +75,22 @@ export default async function DashboardPage() {
             Привет, {profile.username}
           </h1>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        
+        <div className="flex gap-2 flex-wrap items-center w-full md:w-auto">
           <Link href="/generate">
             <Button>Создать кампанию</Button>
           </Link>
           <Link href="/join">
             <Button variant="outline">Присоединиться</Button>
           </Link>
+          
+          <div className="flex-grow hidden md:block" />
+          
+          <Link href="/library">
+            <Button variant="outline">Моя библиотека</Button>
+          </Link>
           <SmartLink href="/profile">
-            <Button variant="ghost">Профиль</Button>
+            <Button variant="outline">Профиль</Button>
           </SmartLink>
         </div>
       </div>
@@ -122,8 +122,7 @@ export default async function DashboardPage() {
                       </Badge>
                     </CardTitle>
                     <p className="text-xs text-forge-muted">
-                      {THEME_LABEL[c.theme] ?? c.theme} ·{" "}
-                      {formatPlayers(c.party_size - 1)}
+                      Классика D&D · {formatPlayers(c.party_size - 1)}
                     </p>
                   </CardHeader>
                   <CardContent className="flex gap-2 flex-wrap">

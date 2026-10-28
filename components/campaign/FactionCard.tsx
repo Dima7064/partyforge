@@ -62,6 +62,24 @@ export function FactionCard({
     }
   }
 
+  async function saveToLibrary() {
+    try {
+      const res = await fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "faction",
+          name: faction.name,
+          data: { goals: faction.goals, attitude: faction.attitude, description: faction.description },
+        }),
+      });
+      if (!res.ok) throw new Error("Ошибка сохранения");
+      show("success", "Фракция сохранена в библиотеку");
+    } catch (e) {
+      show("error", "Не удалось сохранить");
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -134,6 +152,11 @@ export function FactionCard({
           <>
             <p className="text-sm text-forge-parchment">{faction.description}</p>
             <p className="text-xs text-forge-muted">Цель: {faction.goals}</p>
+            {canEdit && (
+              <div className="flex gap-2 pt-2">
+                 <Button size="sm" variant="ghost" onClick={saveToLibrary}>В библиотеку</Button>
+              </div>
+            )}
           </>
         )}
       </CardContent>
