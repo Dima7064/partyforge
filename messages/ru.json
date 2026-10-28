@@ -1,0 +1,24 @@
+{
+  "Nav": {
+    "dashboard": "Личный кабинет",
+    "library": "Моя библиотека",
+    "profile": "Профиль",
+    "create": "Создать кампанию",
+    "join": "Присоединиться",
+    "explore": "Каталог кампаний"
+  },
+  "Home": {
+    "title": "SagaForge",
+    "subtitle": "Создавай связанные кампании для D&D",
+    "btn_start": "Зарегистрироваться",
+    "btn_login": "Войти"
+  },
+  "Auth": {
+    "login_title": "Вход в SagaForge",
+    "register_title": "Регистрация в SagaForge",
+    "username": "Логин",
+    "password": "Пароль",
+    "submit_login": "Войти",
+    "submit_register": "Зарегистрироваться"
+  }
+}
