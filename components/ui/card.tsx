@@ -5,12 +5,12 @@ export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        "relative bg-forge-surface border border-forge-border shadow-[0_10px_30px_rgba(0,0,0,0.8)] ragged-edge",
+        "relative bg-[#1c1815] border border-forge-border shadow-[0_10px_30px_rgba(0,0,0,0.8)] ragged-edge",
         className
       )}
       {...props}
     >
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] opacity-20 pointer-events-none mix-blend-overlay" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] opacity-30 pointer-events-none mix-blend-overlay" />
       <div className="relative z-10">
         {children}
       </div>
