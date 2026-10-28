@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { Cinzel, Inter } from "next/font/google";
 import "@/app/globals.css";
-import { Providers } from "@/app/providers";
+import { Providers } from "./providers";
 import { SkipLink } from "@/components/ui/skip-link";
 import { GuestBanner } from "@/components/ui/guest-banner";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const cinzel = Cinzel({
   variable: "--font-cinzel",
@@ -41,6 +42,11 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <SkipLink />
           <GuestBanner authenticated={!!user} />
+          
+          <div className="absolute top-4 right-4 z-50">
+            <LanguageSwitcher />
+          </div>
+
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>
