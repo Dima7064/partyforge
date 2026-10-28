@@ -19,7 +19,6 @@ html, body {
   color: var(--color-forge-parchment);
   font-family: var(--font-inter), system-ui, sans-serif;
   overflow-x: hidden;
-  cursor: crosshair;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -51,29 +50,21 @@ h1, h2, h3, h4, h5, h6 {
   inset: 0;
   z-index: 9998;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: 0.06;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
-
-.vignette-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9997;
-  pointer-events: none;
-  background: radial-gradient(circle at center, transparent 20%, rgba(10, 9, 8, 0.95) 90%);
 }
 
 @keyframes ember-float {
   0% { transform: translateY(0px) scale(1); opacity: 0; }
-  20% { opacity: 0.8; }
-  80% { opacity: 0.6; }
-  100% { transform: translateY(-150px) scale(0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-200px) scale(0); opacity: 0; }
 }
 
 .ember-particle {
   position: fixed;
-  background: var(--color-forge-ember);
-  box-shadow: 0 0 10px var(--color-forge-ember), 0 0 20px #ff4500;
+  background: #ff6b35;
+  box-shadow: 0 0 12px #ff6b35, 0 0 25px #ff0000;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9996;
@@ -125,10 +116,10 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #5c0000;
+  color: #ffcdd2;
   font-family: var(--font-cinzel);
   font-weight: 900;
-  text-shadow: 1px 1px 0px rgba(255,255,255,0.1);
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
 }
 
 .sr-only {

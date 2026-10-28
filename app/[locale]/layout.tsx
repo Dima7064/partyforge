@@ -10,22 +10,9 @@ import { getMessages } from 'next-intl/server';
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { MouseSpotlight } from "@/components/ui/mouse-spotlight";
 
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "cyrillic"],
-});
-
-const fell = IM_Fell_English_SC({
-  variable: "--font-fell",
-  subsets: ["latin"],
-  weight: ["400"],
-});
+const cinzel = Cinzel({ variable: "--font-cinzel", subsets: ["latin"], weight: ["400", "600", "700", "900"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin", "cyrillic"] });
+const fell = IM_Fell_English_SC({ variable: "--font-fell", subsets: ["latin"], weight: ["400"] });
 
 export const metadata: Metadata = {
   title: "SagaForge | Dark Fantasy",
@@ -43,12 +30,12 @@ export default async function RootLayout({
   const user = await getCurrentUser();
   const messages = await getMessages();
 
-  const embers = Array.from({ length: 20 }).map((_, i) => ({
+  const embers = Array.from({ length: 30 }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     bottom: `-10px`,
-    size: `${Math.random() * 3 + 1}px`,
-    duration: `${Math.random() * 5 + 4}s`,
+    size: `${Math.random() * 4 + 2}px`,
+    duration: `${Math.random() * 4 + 3}s`,
     delay: `-${Math.random() * 5}s`,
   }));
 
@@ -57,7 +44,6 @@ export default async function RootLayout({
       <body className={`${cinzel.variable} ${inter.variable} ${fell.variable} antialiased min-h-screen bg-forge-bg text-forge-parchment`}>
         <MouseSpotlight />
         <div className="grain-overlay" />
-        <div className="vignette-overlay" />
         
         {embers.map(p => (
           <div 
@@ -77,9 +63,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <SkipLink />
           <GuestBanner authenticated={!!user} />
-          
           <LanguageSwitcher />
-
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>
