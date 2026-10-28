@@ -1,52 +1,57 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-export default async function ExplorePage() {
+export default async function ExplorePage({
+  params
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params;
   const supabase = createServerClient();
-  const { data } = await supabase.from("campaigns").select(`
-    id, share_code, title, created_at, fork_count,
-    profiles:user_id (username),
-    campaign_ratings (rating)
-  `).eq("is_public", true).order("created_at", { ascending: false });
 
-  const campaigns = (data || []).map((c: any) => {
-    const ratings = c.campaign_ratings || [];
-    const avg = ratings.length > 0 ? (ratings.reduce((acc: number, r: any) => acc + r.rating, 0) / ratings.length).toFixed(1) : "0.0";
-    return { ...c, avg };
-  });
+  const { data: campaigns } = await supabase
+    .from("campaigns")
+    .select("id, share_code, title, party_size, created_at")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+    <main id="main-content" className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light">Каталог кампаний</h1>
-        <p className="text-forge-muted">Открывайте и копируйте кампании других мастеров</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light mb-2">
+          Каталог кампаний
+        </h1>
+        <p className="text-forge-muted">
+          Публичные приключения, созданные сообществом SagaForge.
+        </p>
       </div>
 
-      {campaigns.length === 0 ? (
+      {!campaigns || campaigns.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-forge-muted">Пока нет публичных кампаний.</CardContent>
+          <CardContent className="p-8 text-center">
+            <p className="text-forge-muted">
+              В каталоге пока пусто. Зайдите в настройки своей кампании и нажмите «Опубликовать», чтобы поделиться ею!
+            </p>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaigns.map((c: any) => (
-            <Card key={c.id}>
-              <CardHeader>
-                <CardTitle className="text-lg">{c.title}</CardTitle>
-                <p className="text-xs text-forge-muted">Автор: {c.profiles?.username || "Unknown"}</p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="gold">★ {c.avg}</Badge>
-                  <Badge variant="muted">Форков: {c.fork_count}</Badge>
-                </div>
-                <Link href={`/c/${c.share_code}`}>
-                  <Button className="w-full" variant="outline">Посмотреть</Button>
-                </Link>
-              </CardContent>
-            </Card>
+          {campaigns.map((c) => (
+            <Link key={c.id} href={`/${locale}/c/${c.share_code}`}>
+              <Card className="h-full hover:border-forge-gold/50 transition-colors cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="text-lg">{c.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge variant="muted">Код: {c.share_code}</Badge>
+                    <Badge variant="muted">{c.party_size - 1} игроков</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

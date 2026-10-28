@@ -6,6 +6,7 @@ import { LeaveButton } from "@/components/campaign/LeaveButton";
 import { SmartLink } from "@/components/ui/smart-link";
 import { getCampaignByCode } from "@/lib/db/campaigns";
 import { getCurrentUser } from "@/lib/auth/currentUser";
+import { SimilarCampaigns } from "@/components/campaign/SimilarCampaigns";
 
 export default async function CampaignPage({
   params,
@@ -56,6 +57,7 @@ export default async function CampaignPage({
         </div>
       </div>
       <CampaignTabs campaign={campaign} />
+      <SimilarCampaigns currentCode={code} />
     </main>
   );
 }
