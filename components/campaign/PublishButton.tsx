@@ -10,6 +10,7 @@ export function PublishButton({ campaignCode }: { campaignCode: string }) {
   const router = useRouter();
   const { show } = useToast();
   const [loading, setLoading] = useState(false);
+  const [published, setPublished] = useState(false);
 
   async function handlePublish() {
     if (!confirm("Опубликовать кампанию в общем каталоге? Её смогут увидеть и скопировать другие пользователи.")) return;
@@ -22,6 +23,7 @@ export function PublishButton({ campaignCode }: { campaignCode: string }) {
       if (!res.ok) throw new Error("Ошибка публикации");
       
       show("success", "Кампания опубликована в каталоге!");
+      setPublished(true);
       router.refresh();
     } catch (e) {
       show("error", "Не удалось опубликовать");
@@ -31,15 +33,22 @@ export function PublishButton({ campaignCode }: { campaignCode: string }) {
   }
 
   return (
-    <Card className="border-forge-gold/50 bg-forge-gold/5">
-      <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
+    <Card className="border-forge-gold/50 bg-forge-gold/5 relative overflow-visible">
+      <CardContent className="p-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="font-semibold text-forge-gold-light">Публичный каталог</p>
+          <p className="font-semibold text-forge-gold-light font-serif text-lg">Публичный каталог</p>
           <p className="text-sm text-forge-muted">Поделитесь кампанией с сообществом. Другие смогут её скопировать.</p>
         </div>
-        <Button onClick={handlePublish} disabled={loading}>
-          {loading ? "Публикуем..." : "Опубликовать"}
-        </Button>
+        
+        {published ? (
+          <div className="wax-seal w-16 h-16 text-3xl rotate-12 transform">
+            S
+          </div>
+        ) : (
+          <Button onClick={handlePublish} disabled={loading} variant="danger">
+            {loading ? "Публикуем..." : "Опубликовать"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
