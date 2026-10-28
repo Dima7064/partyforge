@@ -47,6 +47,24 @@ export function LocationCard({ location, locationId, canEdit, links }: { locatio
     } catch (e) { show("error", "Ошибка"); } finally { setSaving(false); }
   }
 
+  async function saveToLibrary() {
+    try {
+      const res = await fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "location",
+          name: location.name,
+          data: { type: location.type, description: location.description },
+        }),
+      });
+      if (!res.ok) throw new Error("Ошибка сохранения");
+      show("success", "Локация сохранена в библиотеку");
+    } catch (e) {
+      show("error", "Не удалось сохранить");
+    }
+  }
+
   return (
     <>
       <Card>
@@ -97,7 +115,16 @@ export function LocationCard({ location, locationId, canEdit, links }: { locatio
                 <Button variant="ghost" onClick={() => setEditing(false)}>Отмена</Button>
               </div>
             </div>
-          ) : <p className="text-sm text-forge-parchment">{location.description}</p>}
+          ) : (
+            <>
+              <p className="text-sm text-forge-parchment">{location.description}</p>
+              {canEdit && (
+                <div className="flex gap-2 pt-2">
+                   <Button size="sm" variant="ghost" onClick={saveToLibrary}>В библиотеку</Button>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
       {canEdit && <ImagePickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Локация" type="location" locationType={location.type} currentUrl={location.image_url ?? null} onSelect={async (id) => { await fetch(`/api/locations/${locationId}/image`, { method: "PATCH", body: JSON.stringify({ image_id: id }) }); router.refresh(); }} />}

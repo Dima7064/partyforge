@@ -15,7 +15,6 @@ import { CharacterNotes } from "./CharacterNotes";
 import { ImagePickerModal } from "./ImagePickerModal";
 import { IMAGE_DIMENSIONS } from "@/lib/images/dimensions";
 import { useToast } from "@/lib/hooks/useToast";
-import { shouldShowAchievement } from "@/lib/achievements-client";
 
 const ROLE_LABEL: Record<string, string> = { tank: "Танк", healer: "Хилер", dps: "DPS", face: "Лицо партии", control: "Контроль", support: "Поддержка" };
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"] as const;
@@ -34,14 +33,13 @@ export function CharacterCard({
   character: Character; characterIndex: number; campaignCode?: string; characters: Character[]; relationships: Relationship[]; hooks: Hook[]; canEdit: boolean; canSeeNotes: boolean; canChangeImage: boolean; initialNote: string;
 }) {
   const router = useRouter();
-  const { show, showAchievement } = useToast();
+  const { show } = useToast();
   const [editing, setEditing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [pools, setPools] = useState<any>(null);
 
-  // Поля
   const [name, setName] = useState(character.name);
   const [className, setClassName] = useState(character.class_name);
   const [raceName, setRaceName] = useState(character.race_name);
@@ -79,6 +77,24 @@ export function CharacterCard({
       show("error", "Не удалось сохранить");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveToLibrary() {
+    try {
+      const res = await fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "npc",
+          name: character.name,
+          data: character,
+        }),
+      });
+      if (!res.ok) throw new Error("Ошибка сохранения");
+      show("success", "Персонаж сохранён в библиотеку");
+    } catch (e) {
+      show("error", "Не удалось сохранить");
     }
   }
 
@@ -208,6 +224,7 @@ export function CharacterCard({
                 {canEdit && (
                   <div className="pt-2 flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Редактировать (Выбор)</Button>
+                    <Button variant="ghost" size="sm" onClick={saveToLibrary}>В библиотеку</Button>
                   </div>
                 )}
               </>
