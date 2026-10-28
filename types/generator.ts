@@ -1,7 +1,3 @@
-// ============================================
-// Вход генератора
-// ============================================
-
 export type Tone =
   | "dark_fantasy"
   | "heroic"
@@ -10,7 +6,7 @@ export type Tone =
   | "wild"
   | "religious";
 
-export type Theme = "classic" | "skyrim";
+export type Theme = "classic";
 
 export type CharacterRole =
   | "tank"
@@ -37,23 +33,14 @@ export interface GeneratorInput {
   system: string;
   level: number;
   tone: Tone;
-  theme: Theme;
   party_size: number;
   world: string;
   constraints: Constraints;
   duration: "one_shot" | "mini_campaign" | "long_campaign";
 }
 
-// ============================================
-// Характеристики
-// ============================================
-
 export type Ability = "str" | "dex" | "con" | "int" | "wis" | "cha";
 export type Abilities = Record<Ability, number>;
-
-// ============================================
-// Персонаж
-// ============================================
 
 export interface Personality {
   values: string[];
@@ -73,15 +60,12 @@ export interface Character {
   abilities: Abilities;
   personality: Personality;
   backstory: string;
+  backstory_options?: string[];
   secret_text: string;
   image_url?: string | null;
   image_width?: number;
   image_height?: number;
 }
-
-// ============================================
-// Связи
-// ============================================
 
 export interface Relationship {
   source_character_index: number;
@@ -89,10 +73,6 @@ export interface Relationship {
   type: RelationshipType;
   description: string;
 }
-
-// ============================================
-// Мир
-// ============================================
 
 export interface Location {
   name: string;
@@ -127,10 +107,6 @@ export interface Npc {
   image_height?: number;
 }
 
-// ============================================
-// Крючки
-// ============================================
-
 export interface Hook {
   id?: string;
   title: string;
@@ -140,10 +116,6 @@ export interface Hook {
   template_id?: string;
   metadata?: Record<string, string>;
 }
-
-// ============================================
-// Кампания
-// ============================================
 
 export interface Campaign {
   input: GeneratorInput;
@@ -156,10 +128,6 @@ export interface Campaign {
   situation: string;
   hooks: Hook[];
 }
-
-// ============================================
-// Каталог
-// ============================================
 
 export interface ClassRow {
   id: string;
@@ -228,15 +196,7 @@ export interface GeneratorData {
   tone_weights: ToneWeightRow[];
 }
 
-// ============================================
-// RNG
-// ============================================
-
 export type Rng = () => number;
-
-// ============================================
-// Сохранённая кампания
-// ============================================
 
 export interface CampaignMember {
   user_id: string;
@@ -250,7 +210,6 @@ export interface SavedCampaignData {
   id: string;
   share_code: string;
   user_id: string | null;
-  theme: Theme;
   status: "draft" | "active" | "finished";
   input: GeneratorInput;
   characters: Character[];
@@ -274,10 +233,6 @@ export interface SavedCampaignData {
   faction_ids?: string[];
 }
 
-// ============================================
-// Профиль и достижения
-// ============================================
-
 export interface Profile {
   id: string;
   username: string;
@@ -290,7 +245,7 @@ export interface UserAchievement {
   name_ru: string;
   description_ru: string;
   icon: string;
-  unlocked_at: string | null; // null = не выполнено
+  unlocked_at: string | null;
 }
 
 export interface ProfileStats {
@@ -313,10 +268,6 @@ export interface ProfileStats {
   achievements_unlocked: number;
 }
 
-// ============================================
-// Приглашения и заметки
-// ============================================
-
 export interface Invite {
   id: string;
   campaign_id: string;
@@ -334,10 +285,6 @@ export interface CharacterNote {
   content: string;
   updated_at: string;
 }
-
-// ============================================
-// Изображения (шаги 50–55)
-// ============================================
 
 export type ImageKind = "portrait" | "npc" | "location" | "map" | "terrain";
 

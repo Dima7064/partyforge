@@ -12,7 +12,6 @@ import type {
   Npc,
   Relationship,
   SavedCampaignData,
-  Theme,
 } from "@/types/generator";
 import { generateShareCode } from "@/lib/campaigns/shareCode";
 import { unlockAchievement } from "@/lib/db/achievements";
@@ -21,78 +20,16 @@ import { assertCampaignLimit } from "@/lib/db/limits";
 
 const MAX_CODE_ATTEMPTS = 5;
 
-// ============================================
-// Предустановленные данные для редактирования (Скайрим)
-// (Удаляется в Фазе 1)
-// ============================================
-
-const SKYRIM_LOCATIONS_PRESETS = [
-  { name: "Вайтран", type: "city", description: "Город у подножия Драконьего моста, окружённый равнинами." },
-  { name: "Солитьюд", type: "city", description: "Столица Скайрима, обитель Империи и Высокого короля." },
-  { name: "Виндхельм", type: "city", description: "Северный город, где чтят старые традиции и Нордов." },
-  { name: "Рифтен", type: "city", description: "Город воров, погрязший в коррупции и тенях." },
-  { name: "Маркарт", type: "city", description: "Город серебряных рудников и клана Серебряной Крови." },
-  { name: "Драконий предел", type: "ruins", description: "Древние руины, полные драугров и ловушек." },
-  { name: "Лабиринт Шалидора", type: "ruins", description: "Лабиринт древнего мага Шалидора, скрывающий тайны." },
-  { name: "Альфтанд", type: "ruins", description: "Подземелья, где спят мертвые." },
-  { name: "Мзулфт", type: "ruins", description: "Гномьи руины с работающими механизмами." },
-  { name: "Храм Небесной Гавани", type: "temple", description: "Величественный храм в Солитьюде." },
-  { name: "Святилище Азуры", type: "temple", description: "Святилище даэдра, скрытое в горах." },
-  { name: "Храм Мары", type: "temple", description: "Храм богини любви и семьи." },
-  { name: "Храм Девяти", type: "temple", description: "Главный храм в Вайтране, где молятся Девяти." },
-  { name: "Сумрачный лес", type: "wild", description: "Лес, где обитают тролли и волки." },
-  { name: "Тундра Вайтрана", type: "wild", description: "Бескрайние равнины, где часто летают драконы." },
-  { name: "Болото Хьялмарк", type: "wild", description: "Опасные топи, кишащие монстрами." },
-  { name: "Глотка мира", type: "wild", description: "Древнее горное ущелье, ведущее к Драконьему Пределу." },
-];
-
-const SKYRIM_FACTIONS_PRESETS = [
-  { name: "Соратники", goals: "Защищать Скайрим и чтить традиции предков.", description: "Древний орден воинов, обитающий в Йоррваскре." },
-  { name: "Среброрукие", goals: "Уничтожить Соратников и захватить власть.", description: "Кровожадные наёмники, враждующие с Йоррваскром." },
-  { name: "Талмор", goals: "Установить господство эльфов и запретить Талос.", description: "Шпионы и агенты Доминиона." },
-  { name: "Гильдия Воров", goals: "Вернуть былое влияние в Рифтене.", description: "Воры, скупщики краденого и мастера скрытности." },
-  { name: "Тёмное Братство", goals: "Служить Матери Ночи и исполнять контракты.", description: "Тайное общество ассасинов." },
-  { name: "Империя", goals: "Сохранить контроль над Скайримом любой ценой.", description: "Легионеры и сторонники Империи." },
-  { name: "Братья Бури", goals: "Освободить Скайрим от Империи.", description: "Мятежники, ведомые Ульфриком Буревестником." },
-];
-
-const SKYRIM_NPCS_PRESETS = [
-  { name: "Свен", description: "Сын трактирщика из Ривервуда, мечтающий о приключениях." },
-  { name: "Ралор", description: "Старый воин, потерявший жену и ушедший в затворничество." },
-  { name: "Хульда", description: "Хозяйка таверны в Вайтране, знающая все городские сплетни." },
-  { name: "Белетор", description: "Кузнец в Вайтране, мечтающий выковать легендарный клинок." },
-  { name: "Йорлунд", description: "Скальд, поющий песни о древних героях." },
-  { name: "Астрид", description: "Лидер Тёмного Братства, скрывающаяся в своём убежище." },
-  { name: "Дельфина", description: "Бывший клинок, ныне тайно служащая делу борьбы с драконами." },
-  { name: "Арнгейр", description: "Последний клинок, живущий в уединении в горах." },
-  { name: "Фаренгар", description: "Придворный маг ярла Вайтрана, увлечённый исследованиями." },
-  { name: "Нирья", description: "Целительница из Вайтрана, уставшая от бесконечных ран." },
-  { name: "Клавикус Вайл", description: "Даэдрический принц, предлагающий сделки с непредсказуемыми последствиями." },
-  { name: "Люсьен Лашанс", description: "Дерзкий ученик Тёмного Братства." },
-  { name: "Балгруф", description: "Ярл Вайтрана, мудрый и справедливый правитель." },
-  { name: "Ирилет", description: "Служанка ярла, мечтающая о свободе." },
-  { name: "Ульфрик Буревестник", description: "Лидер Братьев Бури, стремящийся освободить Скайрим." },
-  { name: "Галмар", description: "Стражник Виндхельма, преданный Ульфрику." },
-  { name: "Бриньольф", description: "Мастер Гильдии воров в Рифтене, хитрый и обаятельный." },
-  { name: "Мерсер Фрей", description: "Заместитель Бриньольфа, скрывающий тёмную тайну." },
-];
-
-// ============================================
-// Сохранение и загрузка кампании
-// ============================================
-
 export async function saveCampaign(
   input: GeneratorInput,
   campaign: Campaign,
   userId: string,
   title?: string,
 ): Promise<{ share_code: string; id: string }> {
-  // Лимит 10 кампаний на пользователя
   await assertCampaignLimit(userId, "create");
 
   const supabase = createServerClient();
 
-  // ----- 0. Все картинки — параллельно -----
   const [characterImages, npcImages, locationImages, mapImage, terrainImage] =
     await Promise.all([
       Promise.all(
@@ -100,13 +37,13 @@ export async function saveCampaign(
           getRandomPoolImage({
             type: "portrait",
             race_name: c.race_name,
-            theme: input.theme,
+            theme: "classic",
           }).then((img) => img?.id ?? null),
         ),
       ),
       Promise.all(
         campaign.npcs.map(() =>
-          getRandomPoolImage({ type: "npc", theme: input.theme }).then(
+          getRandomPoolImage({ type: "npc", theme: "classic" }).then(
             (img) => img?.id ?? null,
           ),
         ),
@@ -116,12 +53,12 @@ export async function saveCampaign(
           getRandomPoolImage({
             type: "location",
             location_type: l.type,
-            theme: input.theme,
+            theme: "classic",
           }).then((img) => img?.id ?? null),
         ),
       ),
-      getRandomPoolImage({ type: "map", theme: input.theme }),
-      getRandomPoolImage({ type: "terrain", theme: input.theme }),
+      getRandomPoolImage({ type: "map", theme: "classic" }),
+      getRandomPoolImage({ type: "terrain", theme: "classic" }),
     ]);
 
   const imageIdsPayload = {
@@ -132,7 +69,6 @@ export async function saveCampaign(
     terrain_image: terrainImage?.id ?? null,
   };
 
-  // ----- 1. RPC: вся вставка в одной транзакции -----
   let share_code = "";
   let campaignId = "";
   let inserted = false;
@@ -162,7 +98,6 @@ export async function saveCampaign(
     throw new Error("Не удалось создать share_code");
   }
 
-  // ----- 2. Достижения (вне транзакции, не критично) -----
   const { count } = await supabase
     .from("campaign_members")
     .select("*", { count: "exact", head: true })
@@ -174,8 +109,6 @@ export async function saveCampaign(
     achievementChecks.push(unlockAchievement(userId, "first_campaign"));
   if ((count ?? 0) >= 10)
     achievementChecks.push(unlockAchievement(userId, "ten_campaigns"));
-  if (input.theme === "skyrim")
-    achievementChecks.push(unlockAchievement(userId, "skyrim_master"));
   await Promise.all(achievementChecks);
 
   return { share_code, id: campaignId };
@@ -325,6 +258,7 @@ export async function getCampaignByCode(
       abilities: c.abilities,
       personality: c.personality,
       backstory: c.backstory,
+      backstory_options: c.backstory_options,
       secret_text: c.secret_text,
       image_url: img?.url ?? null,
       image_width: img?.width,
@@ -451,13 +385,11 @@ export async function getCampaignByCode(
     id: campaignId,
     share_code: campaign.share_code,
     user_id: campaign.user_id,
-    theme: (campaign.theme as Theme) ?? "classic",
     status: campaign.status ?? "active",
     input: {
       system: campaign.system,
       level: campaign.level,
       tone: campaign.tone,
-      theme: (campaign.theme as Theme) ?? "classic",
       party_size: campaign.party_size,
       world: campaign.world,
       constraints: campaign.constraints ?? {},
@@ -484,10 +416,6 @@ export async function getCampaignByCode(
     faction_ids: facts.map((f) => f.id),
   };
 }
-
-// ============================================
-// Управление кампанией
-// ============================================
 
 export async function deleteCampaignByCode(
   code: string,
@@ -538,7 +466,6 @@ export async function joinCampaign(
   userId: string,
   characterIndex: number,
 ): Promise<{ ok: true }> {
-  // Лимит 10 кампаний
   await assertCampaignLimit(userId, "join");
 
   const supabase = createServerClient();
@@ -589,7 +516,6 @@ export async function joinCampaign(
     null;
 
   if (role === "player") {
-    // Проверка: не заполнена ли кампания
     const { count: playerCount } = await supabase
       .from("campaign_members")
       .select("*", { count: "exact", head: true })
@@ -667,10 +593,6 @@ export async function joinCampaign(
 
   return { ok: true };
 }
-
-// ============================================
-// Редактирование персонажа и связей
-// ============================================
 
 export async function updateCharacter(
   characterId: string,
@@ -789,10 +711,6 @@ export async function updateRelationshipType(
   if (error) throw error;
 }
 
-// ============================================
-// Приглашения
-// ============================================
-
 export async function createInvite(
   campaignCode: string,
   userId: string,
@@ -889,10 +807,6 @@ export async function findInviteByCode(
   return { invite: data, campaign_id: data.campaign_id };
 }
 
-// ============================================
-// Заметки и выход
-// ============================================
-
 export async function getNote(
   characterId: string,
   userId: string,
@@ -964,10 +878,6 @@ export async function leaveCampaign(
   if (error) throw error;
 }
 
-// ============================================
-// Изображения персонажей
-// ============================================
-
 export async function changeCharacterImage(
   characterId: string,
   userId: string,
@@ -1011,10 +921,6 @@ export async function changeCharacterImage(
   if (error) throw error;
 }
 
-// ============================================
-// Редактирование мира
-// ============================================
-
 export async function updateLocation(
   id: string,
   userId: string,
@@ -1038,19 +944,6 @@ export async function updateLocation(
     .single();
 
   if (member?.role !== "master") throw new Error("Только мастер");
-
-  const { data: campaign } = await supabase
-    .from("campaigns")
-    .select("theme")
-    .eq("id", loc.campaign_id)
-    .single();
-
-  if (campaign?.theme === "skyrim" && updates.name) {
-    const preset = SKYRIM_LOCATIONS_PRESETS.find((l) => l.name === updates.name);
-    if (!preset) throw new Error("Такой локации нет в Скайриме");
-    updates.description = preset.description;
-    updates.type = preset.type;
-  }
 
   const { error } = await supabase.from("locations").update(updates).eq("id", id);
   if (error) throw error;
@@ -1080,19 +973,6 @@ export async function updateFaction(
 
   if (member?.role !== "master") throw new Error("Только мастер");
 
-  const { data: campaign } = await supabase
-    .from("campaigns")
-    .select("theme")
-    .eq("id", fact.campaign_id)
-    .single();
-
-  if (campaign?.theme === "skyrim" && updates.name) {
-    const preset = SKYRIM_FACTIONS_PRESETS.find((f) => f.name === updates.name);
-    if (!preset) throw new Error("Такой фракции нет в Скайриме");
-    updates.goals = preset.goals;
-    updates.description = preset.description;
-  }
-
   const { error } = await supabase.from("factions").update(updates).eq("id", id);
   if (error) throw error;
 }
@@ -1120,18 +1000,6 @@ export async function updateNpc(
     .single();
 
   if (member?.role !== "master") throw new Error("Только мастер");
-
-  const { data: campaign } = await supabase
-    .from("campaigns")
-    .select("theme")
-    .eq("id", npc.campaign_id)
-    .single();
-
-  if (campaign?.theme === "skyrim" && updates.name) {
-    const preset = SKYRIM_NPCS_PRESETS.find((n) => n.name === updates.name);
-    if (!preset) throw new Error("Такого NPC нет в Скайриме");
-    updates.description = preset.description;
-  }
 
   const { error } = await supabase.from("npcs").update(updates).eq("id", id);
   if (error) throw error;

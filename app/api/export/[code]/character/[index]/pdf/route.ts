@@ -10,11 +10,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const THEME_LABEL: Record<string, string> = {
-  classic: "Классика D&D",
-  skyrim: "Скайрим",
-};
-
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ code: string; index: string }> },
@@ -51,17 +46,17 @@ export async function GET(
       hooks: campaign.hooks,
       showSecret: isMaster,
       campaignCode: campaign.share_code,
-      themeLabel: THEME_LABEL[campaign.theme] ?? campaign.theme,
+      themeLabel: "Классика D&D",
     });
 
     const buffer = await renderToBuffer(doc);
-
     await unlockAchievement(user.id, "first_export");
 
     const safeName = encodeURIComponent(
-      `partyforge-${campaign.share_code}-${character.name}.pdf`,
+      `sagaforge-${campaign.share_code}-${character.name}.pdf`,
     );
-    const contentDisposition = `attachment; filename="partyforge-${campaign.share_code}.pdf"; filename*=UTF-8''${safeName}`;
+
+    const contentDisposition = `attachment; filename="sagaforge-${campaign.share_code}.pdf"; filename*=UTF-8''${safeName}`;
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

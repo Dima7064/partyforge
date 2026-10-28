@@ -21,8 +21,6 @@ export function generateCampaign(
       ? seedFromString(seed)
       : seed ?? Math.floor(Math.random() * 2 ** 32);
   const rng = mulberry32(numericSeed);
-
-  // Кампания на 6 человек = 1 мастер + 5 игроков
   const playerCount = Math.max(1, input.party_size - 1);
   const characters = generateBalancedParty(
     { ...input, party_size: playerCount },

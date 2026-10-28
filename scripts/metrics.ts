@@ -43,7 +43,6 @@ async function main() {
         system: "dnd5e",
         level: 3,
         tone,
-        theme: "classic",
         party_size: 4,
         world: "custom",
         constraints: {},

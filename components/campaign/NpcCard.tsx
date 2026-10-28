@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { ImageSlot } from "@/components/ui/ImageSlot";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { ImagePickerModal } from "./ImagePickerModal";
 import { useToast } from "@/lib/hooks/useToast";
 import { IMAGE_DIMENSIONS } from "@/lib/images/dimensions";
@@ -27,35 +25,30 @@ const NPC_ROLES = [
   { value: "neutral", label: "Нейтрал" },
 ];
 
-const SKYRIM_NPCS_OPTIONS = [
-  "Свен", "Ралор", "Хульда", "Белетор", "Йорлунд", "Астрид",
-  "Дельфина", "Арнгейр", "Фаренгар", "Нирья", "Клавикус Вайл",
-  "Люсьен Лашанс", "Балгруф", "Ирилет", "Ульфрик Буревестник",
-  "Галмар", "Бриньольф", "Мерсер Фрей",
-];
-
 export function NpcCard({
   npc,
   npcId,
-  theme,
   canEdit,
 }: {
   npc: Npc;
   npcId: string;
-  theme: string;
   canEdit: boolean;
 }) {
   const router = useRouter();
   const { show } = useToast();
-  const isSkyrim = theme === "skyrim";
-
   const [editing, setEditing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const [name, setName] = useState(npc.name);
   const [role, setRole] = useState(npc.role);
   const [description, setDescription] = useState(npc.description);
+  
+  const [pools, setPools] = useState<any>(null);
+
+  useEffect(() => {
+    if (!editing || pools) return;
+    fetch("/api/catalog/pools").then(r => r.json()).then(d => setPools(d));
+  }, [editing, pools]);
 
   async function handleSave() {
     setSaving(true);
@@ -128,24 +121,17 @@ export function NpcCard({
                 {ROLE_LABEL[npc.role] ?? npc.role}
               </Badge>
             </div>
-
             {editing ? (
               <div className="space-y-3">
-                {isSkyrim ? (
-                  <div>
-                    <Label>NPC (из Скайрима)</Label>
-                    <Select value={name} onChange={(e) => setName(e.target.value)}>
-                      {SKYRIM_NPCS_OPTIONS.map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </Select>
-                  </div>
-                ) : (
-                  <div>
-                    <Label>Имя</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} />
-                  </div>
-                )}
+                <div>
+                  <Label>Имя</Label>
+                  <Select value={name} onChange={(e) => setName(e.target.value)}>
+                    <option value={npc.name}>{npc.name} (текущее)</option>
+                    {pools?.names?.filter((n:any) => n.race_name === "Human").map((n:any) => (
+                      <option key={n.id} value={n.name}>{n.name}</option>
+                    ))}
+                  </Select>
+                </div>
                 <div>
                   <Label>Роль</Label>
                   <Select value={role} onChange={(e) => setRole(e.target.value as "ally" | "enemy" | "neutral")}>
@@ -156,15 +142,12 @@ export function NpcCard({
                 </div>
                 <div>
                   <Label>Описание</Label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                    disabled={isSkyrim}
-                  />
-                  {isSkyrim && (
-                    <p className="text-forge-muted text-xs mt-1">Фиксировано для Скайрима.</p>
-                  )}
+                  <Select value={description} onChange={(e) => setDescription(e.target.value)}>
+                    <option value={npc.description}>{npc.description} (текущее)</option>
+                    {pools?.descriptions?.filter((d:any) => d.entity_type === "npc").map((d:any, i:number) => (
+                      <option key={i} value={d.text}>{d.text}</option>
+                    ))}
+                  </Select>
                 </div>
                 <div className="flex gap-2 flex-wrap pt-1">
                   <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
@@ -187,7 +170,7 @@ export function NpcCard({
                       Картинка
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                      Редактировать
+                      Изменить
                     </Button>
                   </div>
                 )}
@@ -196,14 +179,12 @@ export function NpcCard({
           </div>
         </div>
       </Card>
-
       {canEdit && (
         <ImagePickerModal
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
           title={`Портрет NPC: ${npc.name}`}
           type="npc"
-          theme={theme}
           currentUrl={npc.image_url ?? null}
           onSelect={changeImage}
         />
