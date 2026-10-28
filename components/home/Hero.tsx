@@ -3,36 +3,40 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { fadeUp, staggerContainer } from "@/components/ui/motion";
 
 export function Hero({ authenticated }: { authenticated: boolean }) {
   return (
     <motion.div
-      className="max-w-2xl w-full text-center space-y-8"
+      className="relative max-w-4xl w-full text-center space-y-8 py-20 px-4 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-forge-border"
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={fadeUp} className="space-y-4">
+      <div 
+        className="absolute inset-0 z-0 opacity-40 bg-cover bg-center"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=2000&auto=format&fit=crop')" }}
+      />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-forge-bg via-forge-bg/80 to-transparent" />
+
+      <motion.div variants={fadeUp} className="relative z-10 space-y-4">
         <p className="text-forge-gold text-sm tracking-[0.3em] uppercase">
-          Конструктор партий
+          Кузница Кампаний
         </p>
         <motion.h1
-          className="text-5xl md:text-7xl font-bold text-forge-gold-light"
+          className="text-5xl md:text-7xl font-bold text-forge-gold-light drop-shadow-[0_0_20px_rgba(201,162,39,0.5)]"
           initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
           SagaForge
         </motion.h1>
-        <p className="text-forge-muted text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
-          Собирай связанные партии персонажей, локации, ситуации и сюжетные
-          крючки для настольных ролевых игр.
+        <p className="text-forge-parchment text-lg md:text-xl max-w-xl mx-auto leading-relaxed drop-shadow-md">
+          Создавайте связанные партии персонажей, локации и сюжетные крючки. Пусть ваши истории оживут.
         </p>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="flex gap-3 justify-center flex-wrap">
+      <motion.div variants={fadeUp} className="relative z-10 flex gap-4 justify-center flex-wrap">
         {authenticated ? (
           <>
             <Link href="/dashboard">
@@ -52,17 +56,6 @@ export function Hero({ authenticated }: { authenticated: boolean }) {
             </Link>
           </>
         )}
-      </motion.div>
-
-      <motion.div variants={fadeUp}>
-        <Card className="max-w-md mx-auto text-left">
-          <CardContent>
-            <p className="text-sm text-forge-muted">
-              Версия 1.0 — генерация, роли мастера и игрока, редактирование,
-              изображения, экспорт в PDF и JSON.
-            </p>
-          </CardContent>
-        </Card>
       </motion.div>
     </motion.div>
   );
