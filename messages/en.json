@@ -1,0 +1,24 @@
+{
+  "Nav": {
+    "dashboard": "Dashboard",
+    "library": "My Library",
+    "profile": "Profile",
+    "create": "Create Campaign",
+    "join": "Join",
+    "explore": "Explore"
+  },
+  "Home": {
+    "title": "SagaForge",
+    "subtitle": "Create interconnected D&D campaigns",
+    "btn_start": "Sign Up",
+    "btn_login": "Log In"
+  },
+  "Auth": {
+    "login_title": "Login to SagaForge",
+    "register_title": "Register for SagaForge",
+    "username": "Username",
+    "password": "Password",
+    "submit_login": "Log In",
+    "submit_register": "Sign Up"
+  }
+}
