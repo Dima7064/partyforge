@@ -1,24 +1,46 @@
 {
-  "Nav": {
-    "dashboard": "Dashboard",
+  "Dashboard": {
+    "greeting": "Hello",
+    "cabinet": "Dashboard",
+    "create": "Create Campaign",
+    "join": "Join Campaign",
     "library": "My Library",
     "profile": "Profile",
-    "create": "Create Campaign",
-    "join": "Join",
+    "myCampaigns": "My Campaigns",
+    "emptyText": "No campaigns yet. Create your first one or join by code.",
+    "master": "Master",
+    "player": "Player",
+    "open": "Open",
+    "settings": "Settings",
     "explore": "Explore"
   },
-  "Home": {
-    "title": "SagaForge",
-    "subtitle": "Create interconnected D&D campaigns",
-    "btn_start": "Sign Up",
-    "btn_login": "Log In"
-  },
   "Auth": {
-    "login_title": "Login to SagaForge",
-    "register_title": "Register for SagaForge",
+    "login": "Login to SagaForge",
+    "register": "Register in SagaForge",
     "username": "Username",
     "password": "Password",
-    "submit_login": "Log In",
-    "submit_register": "Sign Up"
+    "loginBtn": "Log In",
+    "registerBtn": "Register",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Welcome",
+    "registerSuccess": "Account created",
+    "error": "Invalid username or password",
+    "registerError": "Registration error",
+    "noEmail": "Username and password only. No email or personal data."
+  },
+  "Generate": {
+    "title": "Create Campaign",
+    "desc": "Dark fantasy. Choose level and party size.",
+    "params": "Parameters",
+    "titleLabel": "Title (optional)",
+    "level": "Level",
+    "partySize": "Party size (including master)",
+    "partyHint": "For example, 4 means 1 master and 3 players.",
+    "duration": "Duration",
+    "oneShot": "One Shot",
+    "miniCampaign": "Mini Campaign",
+    "longCampaign": "Long Campaign",
+    "generateBtn": "Generate"
   }
 }

@@ -1,24 +1,46 @@
 {
-  "Nav": {
-    "dashboard": "Личный кабинет",
-    "library": "Моя библиотека",
-    "profile": "Профиль",
+  "Dashboard": {
+    "greeting": "Привет",
+    "cabinet": "Личный кабинет",
     "create": "Создать кампанию",
     "join": "Присоединиться",
-    "explore": "Каталог кампаний"
-  },
-  "Home": {
-    "title": "SagaForge",
-    "subtitle": "Создавай связанные кампании для D&D",
-    "btn_start": "Зарегистрироваться",
-    "btn_login": "Войти"
+    "library": "Моя библиотека",
+    "profile": "Профиль",
+    "myCampaigns": "Мои кампании",
+    "emptyText": "Пока нет кампаний. Создай первую или присоединись по коду.",
+    "master": "Мастер",
+    "player": "Игрок",
+    "open": "Открыть",
+    "settings": "Настройки",
+    "explore": "Каталог"
   },
   "Auth": {
-    "login_title": "Вход в SagaForge",
-    "register_title": "Регистрация в SagaForge",
+    "login": "Вход в SagaForge",
+    "register": "Регистрация в SagaForge",
     "username": "Логин",
     "password": "Пароль",
-    "submit_login": "Войти",
-    "submit_register": "Зарегистрироваться"
+    "loginBtn": "Войти",
+    "registerBtn": "Зарегистрироваться",
+    "noAccount": "Нет аккаунта?",
+    "hasAccount": "Уже есть аккаунт?",
+    "loginSuccess": "Добро пожаловать",
+    "registerSuccess": "Аккаунт создан",
+    "error": "Неверный логин или пароль",
+    "registerError": "Ошибка регистрации",
+    "noEmail": "Логин и пароль. Никаких email и личных данных."
+  },
+  "Generate": {
+    "title": "Создать кампанию",
+    "desc": "Тёмное фэнтези. Выбери уровень и размер группы.",
+    "params": "Параметры",
+    "titleLabel": "Название (опционально)",
+    "level": "Уровень",
+    "partySize": "Размер группы (включая мастера)",
+    "partyHint": "Например, 4 — это 1 мастер и 3 игрока.",
+    "duration": "Длительность",
+    "oneShot": "Ваншот",
+    "miniCampaign": "Мини-кампания",
+    "longCampaign": "Долгая кампания",
+    "generateBtn": "Сгенерировать"
   }
 }

@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SmartLink } from "@/components/ui/smart-link";
 import { createServerClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 
-function formatPlayers(n: number): string {
+function formatPlayers(n: number, locale: string): string {
+  if (locale === "en") return `${n} players`;
   const mod10 = n % 10;
   const mod100 = n % 100;
   if (mod100 >= 11 && mod100 <= 14) return `${n} игроков`;
@@ -17,18 +19,19 @@ function formatPlayers(n: number): string {
   return `${n} игроков`;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Черновик",
-  active: "Активна",
-  finished: "Завершена",
-};
+export default async function DashboardPage({
+  params
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Dashboard' });
 
-export default async function DashboardPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/dashboard");
+  if (!user) redirect(`/${locale}/login?next=/${locale}/dashboard`);
 
   const profile = await getProfile(user.id);
-  if (!profile) redirect("/register");
+  if (!profile) redirect(`/${locale}/register`);
 
   const admin = createServerClient();
 
@@ -69,39 +72,42 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <p className="text-forge-muted text-sm uppercase tracking-wider">
-            Личный кабинет
+            {t('cabinet')}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light">
-            Привет, {profile.username}
+            {t('greeting')}, {profile.username}
           </h1>
         </div>
         
         <div className="flex gap-2 flex-wrap items-center w-full md:w-auto">
-          <Link href="/generate">
-            <Button>Создать кампанию</Button>
+          <Link href={`/${locale}/generate`}>
+            <Button>{t('create')}</Button>
           </Link>
-          <Link href="/join">
-            <Button variant="outline">Присоединиться</Button>
+          <Link href={`/${locale}/join`}>
+            <Button variant="outline">{t('join')}</Button>
+          </Link>
+          <Link href={`/${locale}/explore`}>
+            <Button variant="outline">{t('explore')}</Button>
           </Link>
           
           <div className="flex-grow hidden md:block" />
           
-          <Link href="/library">
-            <Button variant="outline">Моя библиотека</Button>
+          <Link href={`/${locale}/library`}>
+            <Button variant="outline">{t('library')}</Button>
           </Link>
-          <SmartLink href="/profile">
-            <Button variant="outline">Профиль</Button>
+          <SmartLink href={`/${locale}/profile`}>
+            <Button variant="outline">{t('profile')}</Button>
           </SmartLink>
         </div>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-forge-gold">Мои кампании</h2>
+        <h2 className="text-2xl font-semibold text-forge-gold">{t('myCampaigns')}</h2>
         {campaigns.length === 0 ? (
           <Card>
             <CardContent>
               <p className="text-forge-muted text-sm">
-                Пока нет кампаний. Создай первую или присоединись по коду.
+                {t('emptyText')}
               </p>
             </CardContent>
           </Card>
@@ -118,26 +124,26 @@ export default async function DashboardPage() {
                     <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
                       <span>{c.title}</span>
                       <Badge variant="muted">
-                        {STATUS_LABEL[c.status] ?? c.status}
+                        {c.status}
                       </Badge>
                     </CardTitle>
                     <p className="text-xs text-forge-muted">
-                      Классика D&D · {formatPlayers(c.party_size - 1)}
+                      D&D · {formatPlayers(c.party_size - 1, locale)}
                     </p>
                   </CardHeader>
                   <CardContent className="flex gap-2 flex-wrap">
                     <Badge variant="gold">
-                      {roleMap.get(c.id) === "master" ? "Мастер" : "Игрок"}
+                      {roleMap.get(c.id) === "master" ? t('master') : t('player')}
                     </Badge>
-                    <Link href={`/c/${c.share_code}`}>
+                    <Link href={`/${locale}/c/${c.share_code}`}>
                       <Button size="sm" variant="outline">
-                        Открыть
+                        {t('open')}
                       </Button>
                     </Link>
                     {roleMap.get(c.id) === "master" && (
-                      <SmartLink href={`/c/${c.share_code}/settings`}>
+                      <SmartLink href={`/${locale}/c/${c.share_code}/settings`}>
                         <Button size="sm" variant="ghost">
-                          Настройки
+                          {t('settings')}
                         </Button>
                       </SmartLink>
                     )}

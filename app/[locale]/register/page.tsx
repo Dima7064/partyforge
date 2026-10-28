@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/lib/hooks/useToast";
-import {
-  validatePassword,
-  validateUsername,
-  usernameToEmail,
-} from "@/lib/utils/username";
+import { validatePassword, validateUsername, usernameToEmail } from "@/lib/utils/username";
+import { useTranslations } from "next-intl";
 
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextUrl = searchParams.get("next") ?? "/dashboard";
+  const params = useParams();
+  const locale = params.locale as string;
+  const nextUrl = searchParams.get("next") ?? `/${locale}/dashboard`;
 
+  const t = useTranslations("Auth");
   const { show } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -51,14 +51,14 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error ?? "Не удалось создать профиль");
+        throw new Error(err.error ?? t("registerError"));
       }
 
-      show("success", "Аккаунт создан");
+      show("success", t("registerSuccess"));
       router.push(nextUrl);
       router.refresh();
     } catch (err) {
-      show("error", err instanceof Error ? err.message : "Ошибка регистрации");
+      show("error", err instanceof Error ? err.message : t("registerError"));
       setLoading(false);
     }
   }
@@ -68,48 +68,46 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-forge-gold-light">
-            Регистрация в SagaForge
+            {t("register")}
           </h1>
           <p className="text-forge-muted text-sm mt-2">
-            Логин и пароль. Никаких email и личных данных.
+            {t("noEmail")}
           </p>
         </div>
         <Card>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="username">Логин</Label>
+                <Label htmlFor="username">{t("username")}</Label>
                 <Input
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="dovahkiin"
                   autoComplete="username"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="password">Пароль</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="мин. 8 символов"
                   autoComplete="new-password"
                   required
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
-                {loading ? "Создаём..." : "Зарегистрироваться"}
+                {loading ? "..." : t("registerBtn")}
               </Button>
             </form>
           </CardContent>
         </Card>
         <p className="text-center text-forge-muted text-sm">
-          Уже есть аккаунт?{" "}
-          <Link href={`/login?next=${nextUrl}`} className="text-forge-gold hover:underline">
-            Войти
+          {t("hasAccount")}{" "}
+          <Link href={`/${locale}/login?next=${nextUrl}`} className="text-forge-gold hover:underline">
+            {t("loginBtn")}
           </Link>
         </p>
       </div>
