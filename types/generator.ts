@@ -24,6 +24,7 @@ export type NpcRole = "ally" | "enemy" | "neutral";
 
 export interface Constraints {
   no_evil?: boolean;
+  no_magic?: boolean;
   no_pvp?: boolean;
   banned_races?: string[];
   banned_classes?: string[];
@@ -37,6 +38,7 @@ export interface GeneratorInput {
   world: string;
   constraints: Constraints;
   duration: "one_shot" | "mini_campaign" | "long_campaign";
+  focus?: "balanced" | "combat" | "intrigue" | "exploration" | "roleplay";
 }
 
 export type Ability = "str" | "dex" | "con" | "int" | "wis" | "cha";
