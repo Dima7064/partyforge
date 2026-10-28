@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-
 interface ImageSlotProps {
   src?: string | null;
   width: number;
@@ -34,22 +33,24 @@ export function ImageSlot({
 
   if (src) {
     return (
-      <Image
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        className={cn("object-cover w-full h-auto", radius, className)}
-        style={{ aspectRatio: `${width} / ${height}` }}
-        sizes="(max-width: 768px) 100vw, 400px"
-      />
+      <div className={cn("relative p-1 bg-[#111] iron-frame", radius, className)}>
+        <Image
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          className={cn("object-cover w-full h-auto border border-black/50", radius)}
+          style={{ aspectRatio: `${width} / ${height}` }}
+          sizes="(max-width: 768px) 100vw, 400px"
+        />
+      </div>
     );
   }
 
   return (
     <div
       className={cn(
-        "relative bg-forge-bg border-2 border-dashed border-forge-border flex flex-col items-center justify-center text-center p-2",
+        "relative bg-[#0a0a0a] iron-frame flex flex-col items-center justify-center text-center p-2",
         radius,
         className,
       )}

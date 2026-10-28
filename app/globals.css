@@ -1,141 +1,147 @@
 @import "tailwindcss";
 
 @theme {
-  --color-forge-bg: #0f0d0a;
-  --color-forge-surface: #1a1613;
+  --color-forge-bg: #0a0908;
+  --color-forge-surface: #14110f; 
   --color-forge-border: #2e2620;
   --color-forge-gold: #c9a227;
   --color-forge-gold-light: #e8c547;
   --color-forge-ember: #b8451a;
   --color-forge-parchment: #e8ddc4;
   --color-forge-muted: #8a7d6d;
-
   --font-serif: var(--font-cinzel);
   --font-sans: var(--font-inter);
+  --font-fell: var(--font-fell);
 }
 
-html,
-body {
+html, body {
   background-color: var(--color-forge-bg);
   color: var(--color-forge-parchment);
   font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+  cursor: crosshair;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-cinzel), serif;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 15px rgba(201, 162, 39, 0.2);
 }
 
-/* Focus ring — только для keyboard navigation */
+.gothic-title {
+  font-family: var(--font-fell), serif;
+  letter-spacing: 0.05em;
+  color: var(--color-forge-gold-light);
+  text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(201, 162, 39, 0.4);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-forge-gold);
   outline-offset: 2px;
   border-radius: 4px;
 }
-:focus:not(:focus-visible) {
-  outline: none;
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-forge-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-forge-border); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-forge-gold); }
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Скроллбар */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-forge-bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-forge-border);
-  border-radius: 5px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-forge-gold);
+.vignette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 20%, rgba(10, 9, 8, 0.95) 90%);
 }
 
-/* sr-only для skip-link */
+@keyframes ember-float {
+  0% { transform: translateY(0px) scale(1); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-150px) scale(0); opacity: 0; }
+}
+
+.ember-particle {
+  position: fixed;
+  background: var(--color-forge-ember);
+  box-shadow: 0 0 10px var(--color-forge-ember), 0 0 20px #ff4500;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9996;
+  animation: ember-float ease-in infinite;
+}
+
+.ragged-edge {
+  clip-path: polygon(
+    0% 2%, 2% 0%, 5% 1%, 10% 0%, 15% 2%, 20% 0%, 25% 1%, 30% 0%, 35% 2%, 
+    40% 0%, 45% 1%, 50% 0%, 55% 2%, 60% 0%, 65% 1%, 70% 0%, 75% 2%, 
+    80% 0%, 85% 1%, 90% 0%, 95% 2%, 98% 0%, 100% 2%, 
+    100% 98%, 98% 100%, 95% 99%, 90% 100%, 85% 98%, 80% 100%, 75% 99%, 
+    70% 100%, 65% 98%, 60% 100%, 55% 99%, 50% 100%, 45% 98%, 40% 100%, 
+    35% 99%, 30% 100%, 25% 98%, 20% 100%, 15% 99%, 10% 100%, 5% 98%, 2% 100%, 0% 98%
+  );
+}
+
+.iron-frame {
+  border: 4px solid #1a1a1a;
+  outline: 2px solid #3a3a3a;
+  box-shadow: 
+    inset 0 0 20px rgba(0,0,0,0.9), 
+    0 0 15px rgba(0,0,0,0.8),
+    inset 0 0 5px rgba(255,255,255,0.1);
+  position: relative;
+}
+
+.iron-frame::before, .iron-frame::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #666, #111);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.8);
+  z-index: 10;
+}
+
+.iron-frame::before { top: 4px; left: 4px; }
+.iron-frame::after { bottom: 4px; right: 4px; }
+
+.wax-seal {
+  background: radial-gradient(circle at 30% 30%, #d32f2f, #b71c1c, #5c0000);
+  box-shadow: 
+    inset -2px -2px 5px rgba(0,0,0,0.6), 
+    inset 2px 2px 5px rgba(255,255,255,0.2),
+    3px 3px 10px rgba(0,0,0,0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5c0000;
+  font-family: var(--font-cinzel);
+  font-weight: 900;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.1);
+}
+
 .sr-only {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-/* Горизонтальный скролл для табов на мобильных */
-.tabs-scroll {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-/* Модалка */
-@keyframes modal-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.animate-modal-in {
-  animation: modal-in 0.2s ease-out;
-}
-
-/* Тосты */
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(30px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.animate-toast-in {
-  animation: toast-in 0.3s ease-out;
-}
-
-/* Появление карточек */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-up {
-  animation: fade-up 0.5s ease-out both;
-}
-
-/* Stagger через CSS-переменную --stagger */
-.stagger {
-  animation-delay: calc(var(--stagger, 0) * 60ms);
-}
-
-/* Пульсация узлов графа */
-@keyframes node-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.4); }
-  50%      { box-shadow: 0 0 0 8px rgba(201, 162, 39, 0); }
-}
-.node-pulse {
-  animation: node-pulse 2.4s ease-in-out infinite;
-}
-
-/* Уважение к prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
-}
-.animate-scale-in {
-  animation: scale-in 0.25s ease-out;
+  .ember-particle, .grain-overlay { display: none !important; }
 }
