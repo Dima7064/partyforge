@@ -41,11 +41,6 @@ const NPC_ROLE_LABEL: Record<string, string> = {
   neutral: "Нейтрал",
 };
 
-const THEME_LABEL: Record<string, string> = {
-  classic: "Классика D&D",
-  skyrim: "Скайрим",
-};
-
 const ABILITY_LABEL: Record<string, string> = {
   str: "СИЛ",
   dex: "ЛОВ",
@@ -61,32 +56,27 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
 
   return (
     <Document>
-      {/* ============ Обложка ============ */}
       <Page size="A4" style={styles.cover}>
         <Text style={[styles.small, { textTransform: "uppercase", letterSpacing: 4 }]}>
           SagaForge · Конспект мастера
         </Text>
         <Text style={[styles.h1, { fontSize: 38, marginTop: 8 }]}>Кампания</Text>
         <Text style={{ fontSize: 16, marginTop: 4 }}>
-          {THEME_LABEL[campaign.theme] ?? campaign.theme} · Ур. {campaign.input.level} ·{" "}
-          {campaign.characters.length} героев
+          Классика D&D · Ур. {campaign.input.level} · {campaign.characters.length} героев
         </Text>
         <Text style={{ marginTop: 8, fontSize: 12 }}>
           Код: <Text style={{ fontWeight: "bold" }}>{campaign.share_code}</Text>
         </Text>
-
         <View style={{ marginTop: 24 }}>
           <Text style={styles.h2}>Ситуация</Text>
           <Text style={{ lineHeight: 1.4 }}>{campaign.situation}</Text>
         </View>
-
         <View style={styles.footer} fixed>
           <Text>SagaForge · {campaign.share_code}</Text>
           <Text>Конспект мастера</Text>
         </View>
       </Page>
 
-      {/* ============ Карта региона — отдельный лист A4 landscape ============ */}
       {mapSrc ? (
         <Page size="A4" orientation="landscape" style={{ padding: 0 }}>
           <Image
@@ -96,7 +86,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
         </Page>
       ) : null}
 
-      {/* ============ Партия: по странице на героя ============ */}
       {campaign.characters.map((c, idx) => {
         const portraitSrc = resolveImageSrc(c.image_url);
         return (
@@ -134,7 +123,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
                 </Text>
               </View>
             </View>
-
             <View style={styles.abilityGrid}>
               {Object.entries(c.abilities).map(([k, v]) => (
                 <View key={k} style={styles.abilityBox}>
@@ -143,7 +131,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
                 </View>
               ))}
             </View>
-
             <Text style={styles.h3}>Ценности</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
               {c.personality.values.map((v) => (
@@ -160,14 +147,12 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
             <Text>{c.personality.habits.join(", ")}</Text>
             <Text style={styles.h3}>Мотивация</Text>
             <Text>{c.personality.motivation}</Text>
-
             {c.backstory ? (
               <View wrap>
                 <Text style={styles.h2}>Предыстория</Text>
                 <Text style={{ lineHeight: 1.4 }}>{c.backstory}</Text>
               </View>
             ) : null}
-
             {c.secret_text ? (
               <View wrap>
                 <Text style={styles.h2}>Тайна (только для мастера)</Text>
@@ -176,7 +161,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
                 </Text>
               </View>
             ) : null}
-
             <View style={styles.footer} fixed>
               <Text>{c.name} · {campaign.share_code}</Text>
               <Text
@@ -189,7 +173,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
         );
       })}
 
-      {/* ============ Связи + Локации с картинками + Фракции + NPC с портретами + Крючки ============ */}
       <Page size="A4" style={styles.page} wrap>
         <Text style={styles.h2}>Связи между персонажами</Text>
         {campaign.relationships.map((r, i) => {
@@ -204,7 +187,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
             </Text>
           );
         })}
-
         <Text style={styles.h2}>Локации</Text>
         {campaign.locations.map((l, i) => {
           const src = resolveImageSrc(l.image_url);
@@ -248,15 +230,14 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
             </View>
           );
         })}
-
         <Text style={styles.h2}>Фракции</Text>
         {campaign.factions.map((f, i) => (
           <Text key={i} style={{ marginBottom: 4 }}>
             <Text style={{ fontWeight: "bold" }}>{f.name}</Text> (
-            {ATTITUDE_LABEL[f.attitude] ?? f.attitude}): {f.description} Цель: {f.goals}
+            {ATTITUDE_LABEL[f.attitude] ?? f.attitude}): {f.description} Цель:
+            {f.goals}
           </Text>
         ))}
-
         <Text style={styles.h2}>NPC</Text>
         {campaign.npcs.map((n, i) => {
           const src = resolveImageSrc(n.image_url);
@@ -297,14 +278,12 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
             </View>
           );
         })}
-
         <Text style={styles.h2}>Сюжетные крючки</Text>
         {campaign.hooks.map((h, i) => (
           <Text key={i} style={{ marginBottom: 4 }}>
             <Text style={{ fontWeight: "bold" }}>{h.title}</Text>: {h.description}
           </Text>
         ))}
-
         <View style={styles.footer} fixed>
           <Text>{campaign.share_code}</Text>
           <Text
@@ -315,7 +294,6 @@ export function MasterNotesDocument({ campaign }: { campaign: SavedCampaignData 
         </View>
       </Page>
 
-      {/* ============ Террейн — отдельный лист A4 portrait ============ */}
       {terrainSrc ? (
         <Page size="A4" style={{ padding: 0 }}>
           <Image

@@ -82,6 +82,7 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
                 const canEdit = isMaster || (isPlayer && realIndex === myIndex);
                 const canSeeNotes = isPlayer && realIndex === myIndex;
                 const note = c.id ? campaign.my_notes?.[c.id] ?? "" : "";
+
                 return (
                   <div
                     key={realIndex}
@@ -92,7 +93,6 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
                       character={c}
                       characterIndex={realIndex}
                       campaignCode={campaign.share_code}
-                      campaignTheme={campaign.theme}
                       characters={campaign.characters}
                       relationships={campaign.relationships}
                       hooks={campaign.hooks}
@@ -120,7 +120,6 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
         {active === "world" && (
           <WorldTab
             campaignCode={campaign.share_code}
-            campaignTheme={campaign.theme}
             locations={campaign.locations}
             factions={campaign.factions}
             npcs={campaign.npcs}
@@ -136,21 +135,20 @@ export function CampaignTabs({ campaign }: { campaign: SavedCampaignData }) {
 
         {active === "hooks" && (
           <HooksTab
-          hooks={campaign.hooks}
-          characters={campaign.characters}
-          factions={campaign.factions}
-          npcs={campaign.npcs}
-          locations={campaign.locations}
-          canEdit={isMaster}
-          hideOtherCharacters={isPlayer}
-          myCharacterIndex={myIndex}
+            hooks={campaign.hooks}
+            characters={campaign.characters}
+            factions={campaign.factions}
+            npcs={campaign.npcs}
+            locations={campaign.locations}
+            canEdit={isMaster}
+            hideOtherCharacters={isPlayer}
+            myCharacterIndex={myIndex}
           />
         )}
 
         {active === "terrain" && isMaster && (
           <TerrainTab
             campaignCode={campaign.share_code}
-            campaignTheme={campaign.theme}
             terrainImageUrl={campaign.terrain_image_url ?? null}
             canEdit={isMaster}
           />

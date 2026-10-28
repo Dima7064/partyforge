@@ -30,10 +30,8 @@ export function pickClass(
 ): ClassRow {
   const banned = new Set(input.constraints.banned_classes ?? []);
   const toneMap = buildToneWeightMap(data, input.tone);
-
   const candidates: Weighted<ClassRow>[] = data.classes
     .filter((c) => !banned.has(c.name) && !excludeIds.has(c.id))
-    .filter((r) => (r.theme || ["classic"]).includes(input.theme)) // ЗАЩИТА ОТ ОШИБКИ
     .map((c) => ({ item: c, weight: toneMap.get(c.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
@@ -50,10 +48,8 @@ export function pickRace(
 ): RaceRow {
   const banned = new Set(input.constraints.banned_races ?? []);
   const toneMap = buildToneWeightMap(data, input.tone);
-
   const candidates: Weighted<RaceRow>[] = data.races
     .filter((r) => !banned.has(r.name))
-    .filter((r) => (r.theme || ["classic"]).includes(input.theme)) // ЗАЩИТА ОТ ОШИБКИ
     .map((r) => ({ item: r, weight: toneMap.get(r.id) ?? 1.0 }));
 
   if (candidates.length === 0) {
@@ -83,7 +79,6 @@ export function generateCharacter(
 ): Character {
   const cls = pickClass(input, data, ctx.rng, ctx.existingClassIds);
   ctx.existingClassIds.add(cls.id);
-
   const race = pickRace(input, data, ctx.rng);
   const background = pickBackground(data, ctx.rng);
   const name = pickUniqueName(race, ctx.rng, ctx.existingNames);
@@ -103,7 +98,10 @@ export function generateCharacter(
     secret_text,
   };
 
-  const backstory = generateBackstory(partial, input.tone, ctx.rng);
+  const backstoryOptions = Array.from({ length: 5 }).map(() =>
+    generateBackstory(partial, input.tone, ctx.rng),
+  );
+  const backstory = backstoryOptions[0];
 
-  return { ...partial, backstory };
+  return { ...partial, backstory, backstory_options: backstoryOptions };
 }

@@ -12,16 +12,10 @@ import { NpcCard } from "./NpcCard";
 import { SituationCard } from "./SituationCard";
 import { useToast } from "@/lib/hooks/useToast";
 import { IMAGE_DIMENSIONS } from "@/lib/images/dimensions";
-import type {
-  CharacterLocation,
-  Faction,
-  Location,
-  Npc,
-} from "@/types/generator";
+import type { CharacterLocation, Faction, Location, Npc } from "@/types/generator";
 
 export function WorldTab({
   campaignCode,
-  campaignTheme,
   locations,
   factions,
   npcs,
@@ -34,7 +28,6 @@ export function WorldTab({
   mapImageUrl,
 }: {
   campaignCode: string;
-  campaignTheme: string;
   locations: Location[];
   factions: Faction[];
   npcs: Npc[];
@@ -66,7 +59,6 @@ export function WorldTab({
 
   return (
     <div className="space-y-8">
-      {/* ============ Карта региона ============ */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
@@ -108,15 +100,12 @@ export function WorldTab({
         </CardContent>
       </Card>
 
-      {/* ============ Ситуация ============ */}
       <SituationCard
         campaignCode={campaignCode}
         situation={situation}
-        theme={campaignTheme}
         canEdit={canEdit}
       />
 
-      {/* ============ Локации ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">Локации</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -130,7 +119,6 @@ export function WorldTab({
                 key={i}
                 location={l}
                 locationId={locId}
-                theme={campaignTheme}
                 canEdit={canEdit}
                 links={links}
               />
@@ -139,7 +127,6 @@ export function WorldTab({
         </div>
       </section>
 
-      {/* ============ Фракции ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">Фракции</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -148,14 +135,12 @@ export function WorldTab({
               key={i}
               faction={f}
               factionId={factionIds[i]}
-              theme={campaignTheme}
               canEdit={canEdit}
             />
           ))}
         </div>
       </section>
 
-      {/* ============ NPC ============ */}
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-forge-gold">NPC</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,20 +149,17 @@ export function WorldTab({
               key={i}
               npc={n}
               npcId={npcIds[i]}
-              theme={campaignTheme}
               canEdit={canEdit}
             />
           ))}
         </div>
       </section>
 
-      {/* ============ Пикер карты ============ */}
       <ImagePickerModal
         open={pickerMapOpen}
         onClose={() => setPickerMapOpen(false)}
         title="Карта региона"
         type="map"
-        theme={campaignTheme}
         currentUrl={mapImageUrl ?? null}
         onSelect={changeMapImage}
       />

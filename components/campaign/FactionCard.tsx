@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/lib/hooks/useToast";
 import type { Faction } from "@/types/generator";
 
@@ -18,31 +16,29 @@ const ATTITUDE_LABEL: Record<string, string> = {
   neutral: "Нейтрал",
 };
 
-const SKYRIM_FACTIONS_OPTIONS = [
-  "Соратники", "Среброрукие", "Талмор", "Гильдия Воров",
-  "Тёмное Братство", "Империя", "Братья Бури",
-];
-
 export function FactionCard({
   faction,
   factionId,
-  theme,
   canEdit,
 }: {
   faction: Faction;
   factionId: string;
-  theme: string;
   canEdit: boolean;
 }) {
   const router = useRouter();
   const { show } = useToast();
-  const isSkyrim = theme === "skyrim";
-
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(faction.name);
   const [goals, setGoals] = useState(faction.goals);
   const [description, setDescription] = useState(faction.description);
+  
+  const [pools, setPools] = useState<any>(null);
+
+  useEffect(() => {
+    if (!editing || pools) return;
+    fetch("/api/catalog/pools").then(r => r.json()).then(d => setPools(d));
+  }, [editing, pools]);
 
   async function handleSave() {
     setSaving(true);
@@ -89,7 +85,7 @@ export function FactionCard({
             </Badge>
             {canEdit && !editing && factionId && (
               <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                Редактировать
+                Изменить
               </Button>
             )}
           </div>
@@ -98,34 +94,32 @@ export function FactionCard({
       <CardContent className="space-y-2">
         {editing ? (
           <div className="space-y-3">
-            {isSkyrim ? (
-              <div>
-                <Label>Фракция (из Скайрима)</Label>
-                <Select value={name} onChange={(e) => setName(e.target.value)}>
-                  {SKYRIM_FACTIONS_OPTIONS.map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </Select>
-              </div>
-            ) : (
-              <div>
-                <Label>Название</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-            )}
+            <div>
+              <Label>Название</Label>
+              <Select value={name} onChange={(e) => setName(e.target.value)}>
+                <option value={faction.name}>{faction.name} (текущее)</option>
+                {pools?.descriptions?.filter((d:any) => d.entity_type === "faction").map((d:any, i:number) => (
+                  <option key={i} value={d.text.split(".")[0]}>{d.text.split(".")[0]}</option>
+                ))}
+              </Select>
+            </div>
             <div>
               <Label>Цели</Label>
-              <Input value={goals} onChange={(e) => setGoals(e.target.value)} disabled={isSkyrim} />
-              {isSkyrim && (
-                <p className="text-forge-muted text-xs mt-1">Фиксировано для Скайрима.</p>
-              )}
+              <Select value={goals} onChange={(e) => setGoals(e.target.value)}>
+                <option value={faction.goals}>{faction.goals} (текущее)</option>
+                {pools?.descriptions?.filter((d:any) => d.entity_type === "faction").map((d:any, i:number) => (
+                  <option key={i} value={d.text}>{d.text}</option>
+                ))}
+              </Select>
             </div>
             <div>
               <Label>Описание</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} disabled={isSkyrim} />
-              {isSkyrim && (
-                <p className="text-forge-muted text-xs mt-1">Фиксировано для Скайрима.</p>
-              )}
+              <Select value={description} onChange={(e) => setDescription(e.target.value)}>
+                <option value={faction.description}>{faction.description} (текущее)</option>
+                {pools?.descriptions?.filter((d:any) => d.entity_type === "faction").map((d:any, i:number) => (
+                  <option key={i} value={d.text}>{d.text}</option>
+                ))}
+              </Select>
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving} aria-busy={saving}>

@@ -10,7 +10,6 @@ import { Select } from "@/components/ui/select";
 import { DiceLoader } from "@/components/ui/dice-loader";
 import { useToast } from "@/lib/hooks/useToast";
 import { shouldShowAchievement } from "@/lib/achievements-client";
-import type { Theme } from "@/types/generator";
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -19,7 +18,6 @@ export default function GeneratePage() {
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState(3);
   const [partySize, setPartySize] = useState(4);
-  const [theme, setTheme] = useState<Theme>("classic");
   const [duration, setDuration] = useState("mini_campaign");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -33,7 +31,6 @@ export default function GeneratePage() {
           system: "dnd5e",
           level,
           tone: "dark_fantasy",
-          theme,
           party_size: partySize,
           world: "custom",
           constraints: {},
@@ -77,7 +74,7 @@ export default function GeneratePage() {
         Создать кампанию
       </h1>
       <p className="text-forge-muted mb-8">
-        Тёмное фэнтези. Выбери тему, уровень и размер группы.
+        Тёмное фэнтези. Выбери уровень и размер группы.
       </p>
 
       {loading ? (
@@ -101,18 +98,6 @@ export default function GeneratePage() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Сумрачный лес"
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="theme">Тема</Label>
-                <Select
-                  id="theme"
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value as Theme)}
-                >
-                  <option value="classic">Классика D&amp;D</option>
-                  <option value="skyrim">Скайрим</option>
-                </Select>
               </div>
 
               <div>

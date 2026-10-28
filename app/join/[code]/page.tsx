@@ -5,11 +5,6 @@ import { JoinForm } from "@/components/campaign/JoinForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const THEME_LABEL: Record<string, string> = {
-  classic: "Классика D&D",
-  skyrim: "Скайрим",
-};
-
 export default async function JoinByCodePage({
   params,
 }: {
@@ -21,12 +16,10 @@ export default async function JoinByCodePage({
 
   const inviteCheck = await findInviteByCode(code);
   const isInvite = inviteCheck !== null;
-
   const campaign = await getCampaignByCode(code, user.id);
+
   if (!campaign) {
-    // Может, это invite_code — тогда ищем кампанию по campaign_id из invite
     if (isInvite && inviteCheck) {
-      // Получаем share_code кампании через БД
       const { createServerClient } = await import("@/lib/supabase/server");
       const admin = createServerClient();
       const { data: c } = await admin
@@ -34,6 +27,7 @@ export default async function JoinByCodePage({
         .select("share_code")
         .eq("id", inviteCheck.campaign_id)
         .maybeSingle();
+
       if (!c) notFound();
       redirect(`/join/${c.share_code}`);
     }
@@ -61,14 +55,13 @@ export default async function JoinByCodePage({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2 flex-wrap">
-            <Badge variant="gold">{THEME_LABEL[campaign.theme]}</Badge>
+            <Badge variant="gold">Классика D&D</Badge>
             <Badge variant="muted">{campaign.characters.length} героев</Badge>
             <Badge variant="muted">Ур. {campaign.input.level}</Badge>
           </div>
           <p className="text-forge-parchment text-sm">{campaign.situation}</p>
         </CardContent>
       </Card>
-
       <JoinForm
         code={campaign.share_code}
         characters={campaign.characters.map((c, i) => ({

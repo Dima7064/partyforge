@@ -12,12 +12,10 @@ import { IMAGE_DIMENSIONS } from "@/lib/images/dimensions";
 
 export function TerrainTab({
   campaignCode,
-  campaignTheme,
   terrainImageUrl,
   canEdit,
 }: {
   campaignCode: string;
-  campaignTheme: string;
   terrainImageUrl: string | null;
   canEdit: boolean;
 }) {
@@ -96,21 +94,18 @@ export function TerrainTab({
           )}
         </CardContent>
       </Card>
-
       <Lightbox
         open={lightboxOpen}
         src={terrainImageUrl}
         alt="Террейн"
         onClose={() => setLightboxOpen(false)}
       />
-
       {canEdit && (
         <ImagePickerModal
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
           title="Выбрать террейн"
           type="terrain"
-          theme={campaignTheme}
           currentUrl={terrainImageUrl}
           onSelect={handleSelect}
         />

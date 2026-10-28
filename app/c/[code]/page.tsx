@@ -7,11 +7,6 @@ import { SmartLink } from "@/components/ui/smart-link";
 import { getCampaignByCode } from "@/lib/db/campaigns";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 
-const THEME_LABEL: Record<string, string> = {
-  classic: "Классика D&D",
-  skyrim: "Скайрим",
-};
-
 export default async function CampaignPage({
   params,
 }: {
@@ -35,13 +30,12 @@ export default async function CampaignPage({
             Кампания
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-forge-gold-light">
-            {THEME_LABEL[campaign.theme] ?? campaign.theme} · Ур.{" "}
-            {campaign.input.level} · {campaign.characters.length} героев
+            Классика D&D · Ур. {campaign.input.level} · {campaign.characters.length} героев
           </h1>
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Badge variant="gold">{campaign.share_code}</Badge>
             <Badge variant="muted">
-              {campaign.viewer_role === "master" ? "Ты — мастер" : "Ты — игрок"}
+              {campaign.viewer_role === "master" ? "Ты --- мастер" : "Ты --- игрок"}
             </Badge>
             <SmartLink href="/dashboard">
               <Button variant="ghost" size="sm">
@@ -61,7 +55,6 @@ export default async function CampaignPage({
           </div>
         </div>
       </div>
-
       <CampaignTabs campaign={campaign} />
     </main>
   );
